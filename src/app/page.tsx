@@ -109,12 +109,12 @@ const mockProjects: Project[] = [
 ];
 
 const statusColors = {
-  active: "bg-green-100 text-green-800",
-  completed: "bg-blue-100 text-blue-800",
-  on_hold: "bg-yellow-100 text-yellow-800",
-  open: "bg-red-100 text-red-800",
-  in_progress: "bg-yellow-100 text-yellow-800",
-  resolved: "bg-green-100 text-green-800",
+  active: "bg-green-600 text-white",
+  completed: "bg-blue-600 text-white",
+  on_hold: "bg-yellow-500 text-white",
+  open: "bg-red-600 text-white",
+  in_progress: "bg-orange-500 text-white",
+  resolved: "bg-gray-600 text-white",
 };
 
 export default function Dashboard() {
@@ -125,12 +125,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-900">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-slate-800 shadow-md border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">GC Tracker</h1>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+          <h1 className="text-2xl font-bold text-white">GC Tracker</h1>
+          <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-medium">
             + New Project
           </button>
         </div>
@@ -140,51 +140,51 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">Total Projects</p>
-            <p className="text-3xl font-bold">{projects.length}</p>
+          <div className="bg-slate-800 rounded-lg shadow p-6">
+            <p className="text-sm text-slate-400">Total Projects</p>
+            <p className="text-3xl font-bold text-white">{projects.length}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">Active</p>
-            <p className="text-3xl font-bold text-green-600">
+          <div className="bg-slate-800 rounded-lg shadow p-6">
+            <p className="text-sm text-slate-400">Active</p>
+            <p className="text-3xl font-bold text-green-400">
               {projects.filter((p) => p.status === "active").length}
             </p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">Completed</p>
-            <p className="text-3xl font-bold text-blue-600">
+          <div className="bg-slate-800 rounded-lg shadow p-6">
+            <p className="text-sm text-slate-400">Completed</p>
+            <p className="text-3xl font-bold text-blue-400">
               {projects.filter((p) => p.status === "completed").length}
             </p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">On Hold</p>
-            <p className="text-3xl font-bold text-yellow-600">
+          <div className="bg-slate-800 rounded-lg shadow p-6">
+            <p className="text-sm text-slate-400">On Hold</p>
+            <p className="text-3xl font-bold text-yellow-400">
               {projects.filter((p) => p.status === "on_hold").length}
             </p>
           </div>
         </div>
 
         {/* Projects List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold">Projects</h2>
+        <div className="bg-slate-800 rounded-lg shadow border border-slate-700">
+          <div className="px-6 py-4 border-b border-slate-700">
+            <h2 className="text-lg font-semibold text-white">Projects</h2>
           </div>
-          <div className="divide-y">
+          <div className="divide-y divide-slate-700">
             {projects.map((project) => (
               <Link
                 key={project.id}
                 href={`/project/${project.id}`}
-                className="block px-6 py-4 hover:bg-gray-50 transition"
+                className="block px-6 py-4 hover:bg-slate-700 transition"
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-semibold text-white">
                       {project.name}
                     </h3>
-                    <p className="text-gray-500 text-sm mt-1">
+                    <p className="text-slate-300 text-sm mt-1 font-medium">
                       {project.address}
                     </p>
-                    <p className="text-gray-400 text-xs mt-1">
+                    <p className="text-slate-500 text-xs mt-1">
                       Started: {project.startDate}
                     </p>
                   </div>
@@ -195,7 +195,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 {project.subs.length > 0 && (
-                  <p className="text-gray-500 text-sm mt-2">
+                  <p className="text-slate-400 text-sm mt-2">
                     {project.subs.length} trade{project.subs.length !== 1 ? "s" : ""}
                   </p>
                 )}
