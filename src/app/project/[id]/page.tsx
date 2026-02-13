@@ -1,135 +1,185 @@
-// src/app/project/[id]/page.tsx
 "use client";
 
-import { useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FormEvent, use, useEffect, useMemo, useState } from "react";
+import {
+  Project,
+  PunchItem,
+  PunchPriority,
+  PunchStatus,
+  formatLabel,
+  formatTimestamp,
+  isOverdue,
+  loadProjects,
+  priorityColors,
+  saveProjects,
+  statusColors,
+} from "@/lib/projects";
 
-interface PunchItem {
-  id: string;
+interface PunchDraft {
   description: string;
-  status: "open" | "in_progress" | "resolved";
-  timestamp: string;
-  photos: string[];
+  priority: PunchPriority;
+  assignee: string;
+  dueDate: string;
+  status: PunchStatus;
 }
 
-interface Scope {
-  id: string;
-  name: string;
-  punchItems: PunchItem[];
-}
-
-interface SubTrade {
-  id: string;
-  name: string;
-  scopes: Scope[];
-}
-
-interface Project {
-  id: string;
-  name: string;
-  address: string;
-  status: "active" | "completed" | "on_hold";
-  startDate: string;
-  subs: SubTrade[];
-}
-
-// Mock data
-const mockProjects: Project[] = [
-  {
-    id: "1",
-    name: "Riverside Office Renovation",
-    address: "123 Main St, Austin, TX",
-    status: "active",
-    startDate: "2026-01-15",
-    subs: [
-      {
-        id: "s1",
-        name: "Electrical",
-        scopes: [
-          {
-            id: "sc1",
-            name: "Lighting Fixtures",
-            punchItems: [
-              {
-                id: "p1",
-                description: "Install pendant lights in lobby",
-                status: "open",
-                timestamp: "2026-02-10T09:30:00",
-                photos: [],
-              },
-              {
-                id: "p2",
-                description: "Replace switch in break room",
-                status: "resolved",
-                timestamp: "2026-02-08T14:15:00",
-                photos: [],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: "s2",
-        name: "Plumbing",
-        scopes: [
-          {
-            id: "sc2",
-            name: "Restroom Fixtures",
-            punchItems: [
-              {
-                id: "p3",
-                description: "Fix leaky faucet in men's room",
-                status: "in_progress",
-                timestamp: "2026-02-11T10:00:00",
-                photos: [],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Downtown Loft Build",
-    address: "456 Congress Ave, Austin, TX",
-    status: "active",
-    startDate: "2026-02-01",
-    subs: [],
-  },
-  {
-    id: "3",
-    name: "Lake House Remodel",
-    address: "789 Lakeview Dr, Lake Travis, TX",
-    status: "completed",
-    startDate: "2025-11-01",
-    subs: [],
-  },
-];
-
-const statusColors = {
-  active: "bg-green-600 text-white",
-  completed: "bg-blue-600 text-white",
-  on_hold: "bg-yellow-500 text-white",
-  open: "bg-red-600 text-white",
-  in_progress: "bg-orange-500 text-white",
-  resolved: "bg-gray-600 text-white",
+const defaultPunchDraft: PunchDraft = {
+  description: "",
+  priority: "medium",
+  assignee: "",
+  dueDate: "",
+  status: "open",
 };
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
+
+  const [projects, setProjects] = useState<Project[]>(() => loadProjects());
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null);
   const [expandedScope, setExpandedScope] = useState<string | null>(null);
 
-  const project = mockProjects.find((p) => p.id === resolvedParams.id);
+  const [isAddingTrade, setIsAddingTrade] = useState(false);
+  const [newTradeName, setNewTradeName] = useState("");
+
+  const [addingScopeTradeId, setAddingScopeTradeId] = useState<string | null>(null);
+  const [newScopeName, setNewScopeName] = useState("");
+
+  const [addingPunchScopeKey, setAddingPunchScopeKey] = useState<string | null>(null);
+  const [newPunchItem, setNewPunchItem] = useState<PunchDraft>(defaultPunchDraft);
+
+  useEffect(() => {
+    saveProjects(projects);
+  }, [projects]);
+
+  const project = useMemo(
+    () => projects.find((entry) => entry.id === resolvedParams.id),
+    [projects, resolvedParams.id]
+  );
+
+  const handleAddTrade = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!project) {
+      return;
+    }
+
+    const trimmedName = newTradeName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    const tradeId = `s${Date.now()}`;
+    setProjects((currentProjects) =>
+      currentProjects.map((entry) =>
+        entry.id === project.id
+          ? {
+              ...entry,
+              subs: [...entry.subs, { id: tradeId, name: trimmedName, scopes: [] }],
+            }
+          : entry
+      )
+    );
+
+    setExpandedTrade(tradeId);
+    setIsAddingTrade(false);
+    setNewTradeName("");
+  };
+
+  const handleAddScope = (event: FormEvent<HTMLFormElement>, tradeId: string) => {
+    event.preventDefault();
+    if (!project) {
+      return;
+    }
+
+    const trimmedName = newScopeName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    const scopeId = `sc${Date.now()}`;
+    setProjects((currentProjects) =>
+      currentProjects.map((entry) =>
+        entry.id === project.id
+          ? {
+              ...entry,
+              subs: entry.subs.map((trade) =>
+                trade.id === tradeId
+                  ? {
+                      ...trade,
+                      scopes: [...trade.scopes, { id: scopeId, name: trimmedName, punchItems: [] }],
+                    }
+                  : trade
+              ),
+            }
+          : entry
+      )
+    );
+
+    setExpandedTrade(tradeId);
+    setExpandedScope(scopeId);
+    setAddingScopeTradeId(null);
+    setNewScopeName("");
+  };
+
+  const handleAddPunchItem = (
+    event: FormEvent<HTMLFormElement>,
+    tradeId: string,
+    scopeId: string
+  ) => {
+    event.preventDefault();
+    if (!project) {
+      return;
+    }
+
+    const trimmedDescription = newPunchItem.description.trim();
+    if (!trimmedDescription) {
+      return;
+    }
+
+    const punchItem: PunchItem = {
+      id: `p${Date.now()}`,
+      description: trimmedDescription,
+      status: newPunchItem.status,
+      timestamp: new Date().toISOString(),
+      photos: [],
+      dueDate: newPunchItem.dueDate || undefined,
+      assignee: newPunchItem.assignee.trim() || undefined,
+      priority: newPunchItem.priority,
+    };
+
+    setProjects((currentProjects) =>
+      currentProjects.map((entry) =>
+        entry.id === project.id
+          ? {
+              ...entry,
+              subs: entry.subs.map((trade) =>
+                trade.id === tradeId
+                  ? {
+                      ...trade,
+                      scopes: trade.scopes.map((scope) =>
+                        scope.id === scopeId
+                          ? { ...scope, punchItems: [punchItem, ...scope.punchItems] }
+                          : scope
+                      ),
+                    }
+                  : trade
+              ),
+            }
+          : entry
+      )
+    );
+
+    setAddingPunchScopeKey(null);
+    setNewPunchItem(defaultPunchDraft);
+  };
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-slate-900">
         <div className="text-center">
-          <p className="text-slate-400 mb-4">Project not found</p>
+          <p className="mb-4 text-slate-400">Project not found</p>
           <Link href="/" className="text-blue-400 hover:underline">
             Back to Dashboard
           </Link>
@@ -138,158 +188,394 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     );
   }
 
-  const getStatusLabel = (status: string) => {
-    return status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
-  };
-
-  const formatTimestamp = (ts: string) => {
-    return new Date(ts).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <div className="min-h-screen bg-slate-900">
-      {/* Header */}
-      <header className="bg-slate-800 shadow-md border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="border-b border-slate-700 bg-slate-800 shadow-md">
+        <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="text-slate-400 hover:text-white"
-            >
+            <button onClick={() => router.back()} className="text-slate-400 hover:text-white">
               ← Back
             </button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-white">
-                {project.name}
-              </h1>
-              <p className="text-slate-300 text-sm">{project.address}</p>
+              <h1 className="text-2xl font-bold text-white">{project.name}</h1>
+              <p className="text-sm text-slate-300">{project.address}</p>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[project.status]}`}
+              className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[project.status]}`}
             >
-              {getStatusLabel(project.status)}
+              {formatLabel(project.status)}
             </span>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Trades/Subcontractors */}
-        <div className="bg-slate-800 rounded-lg shadow border border-slate-700">
-          <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+      <main className="mx-auto max-w-7xl px-4 py-8">
+        <div className="rounded-lg border border-slate-700 bg-slate-800 shadow">
+          <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
             <h2 className="text-lg font-semibold text-white">Trades & Scopes</h2>
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-medium">
+            <button
+              onClick={() => {
+                setIsAddingTrade((current) => !current);
+                setNewTradeName("");
+              }}
+              className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
+            >
               + Add Trade
             </button>
           </div>
 
+          {isAddingTrade && (
+            <form onSubmit={handleAddTrade} className="border-b border-slate-700 px-6 py-4">
+              <label htmlFor="trade-name" className="mb-2 block text-sm font-medium text-slate-200">
+                Trade Name
+              </label>
+              <div className="flex flex-col gap-2 md:flex-row">
+                <input
+                  id="trade-name"
+                  type="text"
+                  required
+                  value={newTradeName}
+                  onChange={(event) => setNewTradeName(event.target.value)}
+                  placeholder="Electrical, Plumbing, HVAC..."
+                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingTrade(false);
+                      setNewTradeName("");
+                    }}
+                    className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
+                  >
+                    Save Trade
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
           {project.subs.length === 0 ? (
-            <div className="px-6 py-12 text-center text-slate-400">
-              No trades added yet
-            </div>
+            <div className="px-6 py-12 text-center text-slate-400">No trades added yet</div>
           ) : (
             <div className="divide-y divide-slate-700">
               {project.subs.map((trade) => (
                 <div key={trade.id}>
-                  {/* Trade Header */}
                   <div
-                    className="px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition"
-                    onClick={() =>
-                      setExpandedTrade(
-                        expandedTrade === trade.id ? null : trade.id
-                      )
-                    }
+                    className="flex cursor-pointer items-center justify-between px-6 py-4 transition hover:bg-slate-700"
+                    onClick={() => setExpandedTrade(expandedTrade === trade.id ? null : trade.id)}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-lg text-slate-400">
                         {expandedTrade === trade.id ? "▼" : "▶"}
                       </span>
                       <span className="font-medium text-white">{trade.name}</span>
-                      <span className="text-slate-500 text-sm">
-                        ({trade.scopes.length} scope
-                        {trade.scopes.length !== 1 ? "s" : ""})
+                      <span className="text-sm text-slate-500">
+                        ({trade.scopes.length} scope{trade.scopes.length !== 1 ? "s" : ""})
                       </span>
                     </div>
-                    <button className="text-blue-400 text-sm hover:underline">
-                      + Scope
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setExpandedTrade(trade.id);
+                        setAddingScopeTradeId(
+                          addingScopeTradeId === trade.id ? null : trade.id
+                        );
+                        setNewScopeName("");
+                      }}
+                      className="text-sm text-blue-400 hover:underline"
+                    >
+                      + Add Scope
                     </button>
                   </div>
 
-                  {/* Scopes */}
                   {expandedTrade === trade.id && (
-                    <div className="bg-slate-800">
-                      {trade.scopes.map((scope) => (
-                        <div
-                          key={scope.id}
-                          className="px-6 py-3 border-t border-slate-700 flex justify-between items-center cursor-pointer hover:bg-slate-700"
-                          onClick={() =>
-                            setExpandedScope(
-                              expandedScope === scope.id ? null : scope.id
-                            )
-                          }
+                    <div>
+                      {addingScopeTradeId === trade.id && (
+                        <form
+                          onSubmit={(event) => handleAddScope(event, trade.id)}
+                          className="border-t border-slate-700 bg-slate-850 px-6 py-4"
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-500">
-                              {expandedScope === scope.id ? "▼" : "▶"}
-                            </span>
-                            <span className="text-slate-200">{scope.name}</span>
-                            <span className="text-slate-500 text-sm">
-                              ({scope.punchItems.length} items)
-                            </span>
+                          <label
+                            htmlFor={`scope-${trade.id}`}
+                            className="mb-2 block text-sm font-medium text-slate-200"
+                          >
+                            Scope Name
+                          </label>
+                          <div className="flex flex-col gap-2 md:flex-row">
+                            <input
+                              id={`scope-${trade.id}`}
+                              type="text"
+                              required
+                              value={newScopeName}
+                              onChange={(event) => setNewScopeName(event.target.value)}
+                              placeholder="Lighting fixtures, Final trim..."
+                              className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAddingScopeTradeId(null);
+                                  setNewScopeName("");
+                                }}
+                                className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
+                              >
+                                Save Scope
+                              </button>
+                            </div>
                           </div>
-                          <button className="text-blue-400 text-sm hover:underline">
-                            + Punch Item
-                          </button>
-                        </div>
-                      ))}
+                        </form>
+                      )}
 
-                      {/* Punch Items */}
-                      {expandedTrade === trade.id &&
-                        trade.scopes.map(
-                          (scope) =>
-                            expandedScope === scope.id && (
-                              <div key={scope.id} className="bg-slate-750">
-                                {scope.punchItems.length === 0 ? (
-                                  <div className="px-8 py-4 text-slate-500 text-sm">
-                                    No punch items
-                                  </div>
-                                ) : (
-                                  scope.punchItems.map((item) => (
-                                    <div
-                                      key={item.id}
-                                      className="px-8 py-3 border-t border-slate-700 flex justify-between items-start"
-                                    >
-                                      <div>
-                                        <p className="text-sm font-medium text-slate-200">
-                                          {item.description}
-                                        </p>
-                                        <p className="text-slate-500 text-xs mt-1">
-                                          {formatTimestamp(item.timestamp)}
-                                        </p>
-                                        {item.photos.length > 0 && (
-                                          <p className="text-blue-400 text-xs mt-1">
-                                            📷 {item.photos.length} photo
-                                            {item.photos.length !== 1 ? "s" : ""}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <span
-                                        className={`px-2 py-1 rounded text-xs font-medium ${statusColors[item.status]}`}
-                                      >
-                                        {getStatusLabel(item.status)}
-                                      </span>
-                                    </div>
-                                  ))
-                                )}
+                      {trade.scopes.length === 0 ? (
+                        <div className="border-t border-slate-700 px-6 py-4 text-sm text-slate-500">
+                          No scopes yet
+                        </div>
+                      ) : (
+                        trade.scopes.map((scope) => {
+                          const punchKey = `${trade.id}:${scope.id}`;
+                          return (
+                            <div key={scope.id}>
+                              <div
+                                className="flex cursor-pointer items-center justify-between border-t border-slate-700 px-6 py-3 transition hover:bg-slate-700"
+                                onClick={() =>
+                                  setExpandedScope(expandedScope === scope.id ? null : scope.id)
+                                }
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-slate-500">
+                                    {expandedScope === scope.id ? "▼" : "▶"}
+                                  </span>
+                                  <span className="text-slate-200">{scope.name}</span>
+                                  <span className="text-sm text-slate-500">
+                                    ({scope.punchItems.length} items)
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setExpandedScope(scope.id);
+                                    setAddingPunchScopeKey(
+                                      addingPunchScopeKey === punchKey ? null : punchKey
+                                    );
+                                    setNewPunchItem(defaultPunchDraft);
+                                  }}
+                                  className="text-sm text-blue-400 hover:underline"
+                                >
+                                  + Add Punch Item
+                                </button>
                               </div>
-                            )
-                        )}
+
+                              {addingPunchScopeKey === punchKey && (
+                                <form
+                                  onSubmit={(event) => handleAddPunchItem(event, trade.id, scope.id)}
+                                  className="space-y-3 border-t border-slate-700 bg-slate-900/60 px-8 py-4"
+                                >
+                                  <div>
+                                    <label
+                                      htmlFor={`desc-${punchKey}`}
+                                      className="mb-1 block text-sm font-medium text-slate-200"
+                                    >
+                                      Description
+                                    </label>
+                                    <textarea
+                                      id={`desc-${punchKey}`}
+                                      required
+                                      value={newPunchItem.description}
+                                      onChange={(event) =>
+                                        setNewPunchItem((current) => ({
+                                          ...current,
+                                          description: event.target.value,
+                                        }))
+                                      }
+                                      rows={2}
+                                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                                    <div>
+                                      <label
+                                        htmlFor={`priority-${punchKey}`}
+                                        className="mb-1 block text-sm font-medium text-slate-200"
+                                      >
+                                        Priority
+                                      </label>
+                                      <select
+                                        id={`priority-${punchKey}`}
+                                        value={newPunchItem.priority}
+                                        onChange={(event) =>
+                                          setNewPunchItem((current) => ({
+                                            ...current,
+                                            priority: event.target.value as PunchPriority,
+                                          }))
+                                        }
+                                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                                      >
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                      </select>
+                                    </div>
+
+                                    <div>
+                                      <label
+                                        htmlFor={`assignee-${punchKey}`}
+                                        className="mb-1 block text-sm font-medium text-slate-200"
+                                      >
+                                        Assignee
+                                      </label>
+                                      <input
+                                        id={`assignee-${punchKey}`}
+                                        type="text"
+                                        value={newPunchItem.assignee}
+                                        onChange={(event) =>
+                                          setNewPunchItem((current) => ({
+                                            ...current,
+                                            assignee: event.target.value,
+                                          }))
+                                        }
+                                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label
+                                        htmlFor={`due-${punchKey}`}
+                                        className="mb-1 block text-sm font-medium text-slate-200"
+                                      >
+                                        Due Date
+                                      </label>
+                                      <input
+                                        id={`due-${punchKey}`}
+                                        type="date"
+                                        value={newPunchItem.dueDate}
+                                        onChange={(event) =>
+                                          setNewPunchItem((current) => ({
+                                            ...current,
+                                            dueDate: event.target.value,
+                                          }))
+                                        }
+                                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label
+                                        htmlFor={`status-${punchKey}`}
+                                        className="mb-1 block text-sm font-medium text-slate-200"
+                                      >
+                                        Status
+                                      </label>
+                                      <select
+                                        id={`status-${punchKey}`}
+                                        value={newPunchItem.status}
+                                        onChange={(event) =>
+                                          setNewPunchItem((current) => ({
+                                            ...current,
+                                            status: event.target.value as PunchStatus,
+                                          }))
+                                        }
+                                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                                      >
+                                        <option value="open">Open</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="resolved">Resolved</option>
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setAddingPunchScopeKey(null);
+                                        setNewPunchItem(defaultPunchDraft);
+                                      }}
+                                      className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="submit"
+                                      className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
+                                    >
+                                      Save Punch Item
+                                    </button>
+                                  </div>
+                                </form>
+                              )}
+
+                              {expandedScope === scope.id && (
+                                <div className="bg-slate-900/50">
+                                  {scope.punchItems.length === 0 ? (
+                                    <div className="px-8 py-4 text-sm text-slate-500">
+                                      No punch items
+                                    </div>
+                                  ) : (
+                                    scope.punchItems.map((item) => (
+                                      <div
+                                        key={item.id}
+                                        className="flex items-start justify-between border-t border-slate-700 px-8 py-3"
+                                      >
+                                        <div>
+                                          <p className="text-sm font-medium text-slate-200">
+                                            {item.description}
+                                          </p>
+                                          <p className="mt-1 text-xs text-slate-500">
+                                            {formatTimestamp(item.timestamp)}
+                                          </p>
+                                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                                            <span
+                                              className={`rounded-full px-2 py-1 font-medium ${priorityColors[item.priority]}`}
+                                            >
+                                              {formatLabel(item.priority)}
+                                            </span>
+                                            {item.assignee && (
+                                              <span className="rounded-full border border-slate-600 bg-slate-800 px-2 py-1 text-slate-300">
+                                                {item.assignee}
+                                              </span>
+                                            )}
+                                            {item.dueDate && (
+                                              <span
+                                                className={`rounded-full border px-2 py-1 ${
+                                                  isOverdue(item)
+                                                    ? "border-rose-400/40 bg-rose-900/30 text-rose-200"
+                                                    : "border-slate-600 bg-slate-800 text-slate-300"
+                                                }`}
+                                              >
+                                                Due {item.dueDate}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <span
+                                          className={`rounded px-2 py-1 text-xs font-medium ${statusColors[item.status]}`}
+                                        >
+                                          {formatLabel(item.status)}
+                                        </span>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   )}
                 </div>
