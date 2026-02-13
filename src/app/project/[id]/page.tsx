@@ -34,7 +34,7 @@ interface Project {
   subs: SubTrade[];
 }
 
-// Mock data (same as dashboard)
+// Mock data
 const mockProjects: Project[] = [
   {
     id: "1",
@@ -109,12 +109,12 @@ const mockProjects: Project[] = [
 ];
 
 const statusColors = {
-  active: "bg-green-100 text-green-800",
-  completed: "bg-blue-100 text-blue-800",
-  on_hold: "bg-yellow-100 text-yellow-800",
-  open: "bg-red-100 text-red-800",
-  in_progress: "bg-yellow-100 text-yellow-800",
-  resolved: "bg-green-100 text-green-800",
+  active: "bg-green-600 text-white",
+  completed: "bg-blue-600 text-white",
+  on_hold: "bg-yellow-500 text-white",
+  open: "bg-red-600 text-white",
+  in_progress: "bg-orange-500 text-white",
+  resolved: "bg-gray-600 text-white",
 };
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -127,10 +127,10 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Project not found</p>
-          <Link href="/" className="text-blue-600 hover:underline">
+          <p className="text-slate-400 mb-4">Project not found</p>
+          <Link href="/" className="text-blue-400 hover:underline">
             Back to Dashboard
           </Link>
         </div>
@@ -152,22 +152,22 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-900">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-slate-800 shadow-md border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-slate-400 hover:text-white"
             >
               ← Back
             </button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-white">
                 {project.name}
               </h1>
-              <p className="text-gray-500 text-sm">{project.address}</p>
+              <p className="text-slate-300 text-sm">{project.address}</p>
             </div>
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[project.status]}`}
@@ -181,25 +181,25 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Trades/Subcontractors */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Trades & Scopes</h2>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">
+        <div className="bg-slate-800 rounded-lg shadow border border-slate-700">
+          <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-white">Trades & Scopes</h2>
+            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-medium">
               + Add Trade
             </button>
           </div>
 
           {project.subs.length === 0 ? (
-            <div className="px-6 py-12 text-center text-gray-500">
+            <div className="px-6 py-12 text-center text-slate-400">
               No trades added yet
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-slate-700">
               {project.subs.map((trade) => (
                 <div key={trade.id}>
                   {/* Trade Header */}
                   <div
-                    className="px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-gray-50"
+                    className="px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition"
                     onClick={() =>
                       setExpandedTrade(
                         expandedTrade === trade.id ? null : trade.id
@@ -207,27 +207,27 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                     }
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">
+                      <span className="text-lg text-slate-400">
                         {expandedTrade === trade.id ? "▼" : "▶"}
                       </span>
-                      <span className="font-medium">{trade.name}</span>
-                      <span className="text-gray-400 text-sm">
+                      <span className="font-medium text-white">{trade.name}</span>
+                      <span className="text-slate-500 text-sm">
                         ({trade.scopes.length} scope
                         {trade.scopes.length !== 1 ? "s" : ""})
                       </span>
                     </div>
-                    <button className="text-blue-600 text-sm hover:underline">
+                    <button className="text-blue-400 text-sm hover:underline">
                       + Scope
                     </button>
                   </div>
 
                   {/* Scopes */}
                   {expandedTrade === trade.id && (
-                    <div className="bg-gray-50">
+                    <div className="bg-slate-800">
                       {trade.scopes.map((scope) => (
                         <div
                           key={scope.id}
-                          className="px-6 py-3 border-t flex justify-between items-center cursor-pointer hover:bg-gray-100"
+                          className="px-6 py-3 border-t border-slate-700 flex justify-between items-center cursor-pointer hover:bg-slate-700"
                           onClick={() =>
                             setExpandedScope(
                               expandedScope === scope.id ? null : scope.id
@@ -235,15 +235,15 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           }
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-400">
+                            <span className="text-slate-500">
                               {expandedScope === scope.id ? "▼" : "▶"}
                             </span>
-                            <span>{scope.name}</span>
-                            <span className="text-gray-400 text-sm">
+                            <span className="text-slate-200">{scope.name}</span>
+                            <span className="text-slate-500 text-sm">
                               ({scope.punchItems.length} items)
                             </span>
                           </div>
-                          <button className="text-blue-600 text-sm hover:underline">
+                          <button className="text-blue-400 text-sm hover:underline">
                             + Punch Item
                           </button>
                         </div>
@@ -254,26 +254,26 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                         trade.scopes.map(
                           (scope) =>
                             expandedScope === scope.id && (
-                              <div key={scope.id} className="bg-gray-100">
+                              <div key={scope.id} className="bg-slate-750">
                                 {scope.punchItems.length === 0 ? (
-                                  <div className="px-8 py-4 text-gray-500 text-sm">
+                                  <div className="px-8 py-4 text-slate-500 text-sm">
                                     No punch items
                                   </div>
                                 ) : (
                                   scope.punchItems.map((item) => (
                                     <div
                                       key={item.id}
-                                      className="px-8 py-3 border-t flex justify-between items-start"
+                                      className="px-8 py-3 border-t border-slate-700 flex justify-between items-start"
                                     >
                                       <div>
-                                        <p className="text-sm font-medium">
+                                        <p className="text-sm font-medium text-slate-200">
                                           {item.description}
                                         </p>
-                                        <p className="text-gray-400 text-xs mt-1">
+                                        <p className="text-slate-500 text-xs mt-1">
                                           {formatTimestamp(item.timestamp)}
                                         </p>
                                         {item.photos.length > 0 && (
-                                          <p className="text-blue-600 text-xs mt-1">
+                                          <p className="text-blue-400 text-xs mt-1">
                                             📷 {item.photos.length} photo
                                             {item.photos.length !== 1 ? "s" : ""}
                                           </p>
