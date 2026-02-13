@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { FormEvent, use, useEffect, useMemo, useState } from "react";
 import {
   Project,
-  PunchItem,
   PunchPriority,
   PunchStatus,
   formatLabel,
@@ -31,6 +30,17 @@ const defaultPunchDraft: PunchDraft = {
   assignee: "",
   dueDate: "",
   status: "open",
+};
+
+const createNextId = (prefix: string, existingIds: string[]) => {
+  const normalizedExistingIds = new Set(existingIds);
+  let sequence = existingIds.length + 1;
+
+  while (normalizedExistingIds.has(`${prefix}${sequence}`)) {
+    sequence += 1;
+  }
+
+  return `${prefix}${sequence}`;
 };
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -70,16 +80,23 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       return;
     }
 
-    const tradeId = `s${Date.now()}`;
+    let tradeId = "";
     setProjects((currentProjects) =>
-      currentProjects.map((entry) =>
-        entry.id === project.id
-          ? {
-              ...entry,
-              subs: [...entry.subs, { id: tradeId, name: trimmedName, scopes: [] }],
-            }
-          : entry
-      )
+      currentProjects.map((entry) => {
+        if (entry.id !== project.id) {
+          return entry;
+        }
+
+        tradeId = createNextId(
+          "s",
+          entry.subs.map((trade) => trade.id)
+        );
+
+        return {
+          ...entry,
+          subs: [...entry.subs, { id: tradeId, name: trimmedName, scopes: [] }],
+        };
+      })
     );
 
     setExpandedTrade(tradeId);
@@ -98,23 +115,32 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       return;
     }
 
-    const scopeId = `sc${Date.now()}`;
+    let scopeId = "";
     setProjects((currentProjects) =>
-      currentProjects.map((entry) =>
-        entry.id === project.id
-          ? {
-              ...entry,
-              subs: entry.subs.map((trade) =>
-                trade.id === tradeId
-                  ? {
-                      ...trade,
-                      scopes: [...trade.scopes, { id: scopeId, name: trimmedName, punchItems: [] }],
-                    }
-                  : trade
-              ),
+      currentProjects.map((entry) => {
+        if (entry.id !== project.id) {
+          return entry;
+        }
+
+        return {
+          ...entry,
+          subs: entry.subs.map((trade) => {
+            if (trade.id !== tradeId) {
+              return trade;
             }
-          : entry
-      )
+
+            scopeId = createNextId(
+              "sc",
+              trade.scopes.map((scope) => scope.id)
+            );
+
+            return {
+              ...trade,
+              scopes: [...trade.scopes, { id: scopeId, name: trimmedName, punchItems: [] }],
+            };
+          }),
+        };
+      })
     );
 
     setExpandedTrade(tradeId);
@@ -138,17 +164,6 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       return;
     }
 
-    const punchItem: PunchItem = {
-      id: `p${Date.now()}`,
-      description: trimmedDescription,
-      status: newPunchItem.status,
-      timestamp: new Date().toISOString(),
-      photos: [],
-      dueDate: newPunchItem.dueDate || undefined,
-      assignee: newPunchItem.assignee.trim() || undefined,
-      priority: newPunchItem.priority,
-    };
-
     setProjects((currentProjects) =>
       currentProjects.map((entry) =>
         entry.id === project.id
@@ -160,7 +175,25 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                       ...trade,
                       scopes: trade.scopes.map((scope) =>
                         scope.id === scopeId
-                          ? { ...scope, punchItems: [punchItem, ...scope.punchItems] }
+                          ? {
+                              ...scope,
+                              punchItems: [
+                                {
+                                  id: createNextId(
+                                    "p",
+                                    scope.punchItems.map((item) => item.id)
+                                  ),
+                                  description: trimmedDescription,
+                                  status: newPunchItem.status,
+                                  timestamp: new Date().toISOString(),
+                                  photos: [],
+                                  dueDate: newPunchItem.dueDate || undefined,
+                                  assignee: newPunchItem.assignee.trim() || undefined,
+                                  priority: newPunchItem.priority,
+                                },
+                                ...scope.punchItems,
+                              ],
+                            }
                           : scope
                       ),
                     }
@@ -300,7 +333,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                       {addingScopeTradeId === trade.id && (
                         <form
                           onSubmit={(event) => handleAddScope(event, trade.id)}
-                          className="border-t border-slate-700 bg-slate-850 px-6 py-4"
+                          className="border-t border-slate-700 bg-slate-900/50 px-6 py-4"
                         >
                           <label
                             htmlFor={`scope-${trade.id}`}

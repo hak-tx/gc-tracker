@@ -1,6 +1,8 @@
 export type ProjectStatus = "active" | "completed" | "on_hold";
 export type PunchStatus = "open" | "in_progress" | "resolved";
 export type PunchPriority = "low" | "medium" | "high";
+export type TaskStatus = "not_started" | "in_progress" | "completed" | "blocked";
+export type TaskType = "sequential" | "parallel";
 
 export interface PunchItem {
   id: string;
@@ -13,9 +15,24 @@ export interface PunchItem {
   priority: PunchPriority;
 }
 
+export interface Subtask {
+  id: string;
+  description: string;
+  status: TaskStatus;
+}
+
+export interface Task {
+  id: string;
+  description: string;
+  type: TaskType;
+  status: TaskStatus;
+  subtasks: Subtask[];
+}
+
 export interface Scope {
   id: string;
   name: string;
+  tasks: Task[];
   punchItems: PunchItem[];
 }
 
@@ -38,8 +55,10 @@ export const statusColors = {
   active: "bg-green-600 text-white",
   completed: "bg-blue-600 text-white",
   on_hold: "bg-yellow-500 text-white",
+  not_started: "bg-slate-600 text-white",
   open: "bg-red-600 text-white",
   in_progress: "bg-orange-500 text-white",
+  blocked: "bg-rose-700 text-white",
   resolved: "bg-gray-600 text-white",
 } as const;
 
@@ -66,6 +85,18 @@ export const defaultProjects: Project[] = [
           {
             id: "sc1",
             name: "Lighting Fixtures",
+            tasks: [
+              {
+                id: "t1",
+                description: "Rough-in fixture locations",
+                type: "sequential",
+                status: "in_progress",
+                subtasks: [
+                  { id: "st1", description: "Mark ceiling layout", status: "completed" },
+                  { id: "st2", description: "Verify power drops", status: "in_progress" },
+                ],
+              },
+            ],
             punchItems: [
               {
                 id: "p1",
@@ -98,6 +129,7 @@ export const defaultProjects: Project[] = [
           {
             id: "sc2",
             name: "Restroom Fixtures",
+            tasks: [],
             punchItems: [
               {
                 id: "p3",
@@ -168,7 +200,19 @@ export const loadProjects = (): Project[] => {
     if (!Array.isArray(parsed)) {
       return defaultProjects;
     }
-    return parsed;
+    return parsed.map((project) => ({
+      ...project,
+      subs: project.subs.map((trade) => ({
+        ...trade,
+        scopes: trade.scopes.map((scope) => ({
+          ...scope,
+          tasks: (scope.tasks ?? []).map((task) => ({
+            ...task,
+            subtasks: task.subtasks ?? [],
+          })),
+        })),
+      })),
+    }));
   } catch {
     return defaultProjects;
   }
