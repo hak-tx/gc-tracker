@@ -53,7 +53,7 @@ export interface Project {
 }
 
 export const STORAGE_KEY = "gc-tracker-projects";
-const STORAGE_VERSION = "v7";
+const STORAGE_VERSION = "v8";
 
 export const statusColors: Record<ProjectStatus, string> = {
   active: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
@@ -234,7 +234,7 @@ export const defaultProjects: Project[] = [
             endDate: "2026-02-22",
             dependencyTaskIds: [],
             lastMessage: "Got the specs. Customer approved the dishwasher submittal. PDF attached.",
-            lastMessageFrom: "FactorGC Agent",
+            lastMessageFrom: "Carlos (Allied Plumbing)",
             lastMessageAt: "2026-02-14T11:00:00",
             chatMessages: [
               { id: "m9", from: "agent", text: "Carlos, kitchenette rough-in is scheduled to start Feb 15. Are your materials ready?", timestamp: "2026-02-14T07:00:00" },
