@@ -1,8 +1,16 @@
+"use client";
+
 import Link from "next/link";
-import { loadProjects, formatDate, statusColors } from "@/lib/projects";
+import { useEffect, useState } from "react";
+import { loadProjects, formatDate, statusColors, Project } from "@/lib/projects";
 
 export default function ProjectsPage() {
-  const projects = loadProjects();
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    setProjects(loadProjects());
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur">

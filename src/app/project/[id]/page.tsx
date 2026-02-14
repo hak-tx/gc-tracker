@@ -48,7 +48,14 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const resolvedParams = use(params);
   const router = useRouter();
 
-  const [projects, setProjects] = useState<Project[]>(() => loadProjects());
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  // Load from localStorage only on client to avoid hydration mismatch
+  useEffect(() => {
+    setProjects(loadProjects());
+    setLoaded(true);
+  }, []);
   const [newTradeName, setNewTradeName] = useState("");
   const [isAddingTrade, setIsAddingTrade] = useState(false);
 
