@@ -528,10 +528,17 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                               <div className="flex flex-wrap items-center gap-2">
                                 {task.chatMessages && task.chatMessages.length > 0 && (
                                   <button
-                                    onClick={() => setSelectedChatTask({ tradeName: trade.name, taskTitle: task.title, messages: task.chatMessages || [] })}
-                                    className="rounded-full bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-200 hover:bg-slate-600"
+                                    type="button"
+                                    onClick={() =>
+                                      setSelectedChatTask({
+                                        tradeName: trade.name,
+                                        taskTitle: task.title,
+                                        messages: task.chatMessages || [],
+                                      })
+                                    }
+                                    className="text-xs bg-cyan-500 text-slate-900 px-3 py-1.5 rounded font-bold hover:bg-cyan-400"
                                   >
-                                    💬 Chat
+                                    Chat
                                   </button>
                                 )}
                                 <button
@@ -867,7 +874,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                           e.stopPropagation();
                           onViewChat(row.tradeName, row.title, row.chatMessages);
                         }}
-                        className="text-xs bg-cyan-500 text-slate-900 px-2 py-0.5 rounded font-medium hover:bg-cyan-400"
+                        className="text-xs bg-cyan-500 text-slate-900 px-3 py-1.5 rounded font-bold hover:bg-cyan-400"
                       >
                         Chat
                       </button>
