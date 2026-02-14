@@ -929,13 +929,24 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                   >
                     {formatLabel(row.status)}
                   </div>
-                  {/* Hover tooltip */}
-                  {row.lastMessage && (
+                  {/* Hover tooltip - show for all tasks */}
+                  {(row.lastMessage || hasChat) && (
                     <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-slate-700 bg-slate-900 p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl">
-                      <p className="text-sm text-white italic">&quot;{row.lastMessage}&quot;</p>
-                      <p className="mt-2 text-xs text-cyan-300">{row.lastMessageFrom}</p>
-                      <p className="text-xs text-slate-500">{row.lastMessageAt ? new Date(row.lastMessageAt).toLocaleString() : ''}</p>
-                      <p className="mt-1 text-[10px] text-slate-600">Source: Telegram message</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-emerald-400">{row.startDate}</span>
+                        <span className="text-xs text-slate-500">→</span>
+                        <span className="text-xs font-bold text-emerald-400">{row.endDate}</span>
+                      </div>
+                      {row.lastMessage ? (
+                        <>
+                          <p className="text-sm text-white italic">&quot;{row.lastMessage}&quot;</p>
+                          <p className="mt-2 text-xs text-cyan-300">{row.lastMessageFrom}</p>
+                          <p className="text-xs text-slate-500">{row.lastMessageAt ? new Date(row.lastMessageAt).toLocaleString() : ''}</p>
+                          <p className="mt-1 text-[10px] text-slate-600">Source: Telegram message</p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-slate-400">No messages yet</p>
+                      )}
                       {row.chatMessages && row.chatMessages.length > 0 && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || []); }}
