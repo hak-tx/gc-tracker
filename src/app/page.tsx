@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
-import { Sora, DM_Sans } from "next/font/google";
 import "./globals.css";
-
-const sora = Sora({ subsets: ["latin"], variable: "--font-sora" });
-const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm" });
 
 export const metadata: Metadata = {
   title: "FactorGC — Automated Construction Project Management",
@@ -34,7 +30,7 @@ export default function Home() {
 
       {/* What It Does */}
       <section className="mx-auto max-w-5xl px-6 pb-20">
-        <h2 className="text-center font-[var(--font-sora)] text-3xl font-semibold text-white">
+        <h2 className="text-center text-3xl font-semibold text-white">
           What FactorGC Does
         </h2>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
@@ -65,7 +61,7 @@ export default function Home() {
             },
           ].map((item) => (
             <div key={item.title} className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6">
-              <h3 className="font-[var(--font-sora)] text-xl font-semibold text-white">{item.title}</h3>
+              <h3 className="text-xl font-semibold text-white">{item.title}</h3>
               <p className="mt-2 text-slate-300">{item.desc}</p>
             </div>
           ))}
@@ -74,7 +70,7 @@ export default function Home() {
 
       {/* How It Works */}
       <section className="mx-auto max-w-5xl px-6 pb-20">
-        <h2 className="text-center font-[var(--font-sora)] text-3xl font-semibold text-white">
+        <h2 className="text-center text-3xl font-semibold text-white">
           How It Works
         </h2>
         <div className="mt-10 space-y-4">
@@ -100,7 +96,7 @@ export default function Home() {
                 {item.step}
               </div>
               <div>
-                <h3 className="font-[var(--font-sora)] text-xl font-semibold text-white">{item.title}</h3>
+                <h3 className="text-xl font-semibold text-white">{item.title}</h3>
                 <p className="mt-1 text-slate-300">{item.desc}</p>
               </div>
             </div>
@@ -111,7 +107,7 @@ export default function Home() {
       {/* CTA */}
       <section className="mx-auto max-w-3xl px-6 pb-24 text-center">
         <div className="rounded-3xl border border-slate-700 bg-slate-800/50 p-10">
-          <h2 className="font-[var(--font-sora)] text-3xl font-semibold text-white">
+          <h2 className="text-3xl font-semibold text-white">
             Ready to stop chasing subs?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-slate-300">
