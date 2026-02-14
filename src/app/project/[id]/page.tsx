@@ -360,11 +360,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           ) : (
             <div className="divide-y divide-slate-800">
               {project.trades.map((trade) => (
-                <article key={trade.id} className="px-4 py-4">
-                  <div className="mb-3 flex items-center justify-between">
+                <article key={trade.id} className="bg-slate-800/40 px-4 py-5">
+                  <div className="mb-4 flex items-center justify-between rounded-lg bg-slate-800/60 px-4 py-3">
                     <div>
-                      <h3 className="font-medium">{trade.name}</h3>
-                      <p className="text-xs text-slate-500">{trade.tasks.length} task(s)</p>
+                      <h3 className="font-semibold text-white">{trade.name}</h3>
+                      <p className="text-xs text-slate-400">{trade.tasks.length} task(s)</p>
                     </div>
                     <button
                       onClick={() => {
@@ -377,7 +377,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           dependencyTaskIds: [],
                         });
                       }}
-                      className="text-sm text-cyan-300 hover:text-cyan-200"
+                      className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-sm text-cyan-300 hover:bg-cyan-500/30"
                     >
                       + Add Task
                     </button>
@@ -505,7 +505,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   {trade.tasks.length === 0 ? (
                     <p className="text-sm text-slate-500">No tasks yet.</p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3 pl-2">
                       {trade.tasks.map((task) => {
                         const key = `${trade.id}:${task.id}`;
                         const dependencies = task.dependencyTaskIds
@@ -515,7 +515,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           .filter((title): title is string => Boolean(title));
 
                         return (
-                          <div key={task.id} className="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
+                          <div key={task.id} className="rounded-lg border border-slate-700/60 bg-slate-900/50 p-4">
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div>
                                 <h4 className="font-medium">{task.title}</h4>
@@ -640,11 +640,12 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                             )}
 
                             {task.punchItems.length > 0 && (
-                              <div className="mt-3 space-y-2">
+                              <div className="mt-4 space-y-2 pl-3 border-l-2 border-slate-700">
+                                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Punch Items</p>
                                 {task.punchItems.map((item) => (
                                   <div
                                     key={item.id}
-                                    className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2"
+                                    className="rounded-md border border-slate-600/50 bg-slate-800/40 px-4 py-3"
                                   >
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                       <div>
@@ -752,6 +753,9 @@ function GanttChart({ project }: { project: Project }) {
       endDate: task.endDate,
       mode: task.mode,
       status: task.status,
+      lastMessage: task.lastMessage,
+      lastMessageFrom: task.lastMessageFrom,
+      lastMessageAt: task.lastMessageAt,
     }))
   );
 
@@ -805,7 +809,7 @@ function GanttChart({ project }: { project: Project }) {
               dayWidth;
 
             return (
-              <div key={row.id} className="flex items-center">
+              <div key={row.id} className="flex items-center group">
                 <div className="w-[220px] shrink-0 pr-3">
                   <p className="truncate text-sm text-slate-200">{row.title}</p>
                   <p className="text-xs text-slate-500">
@@ -814,7 +818,7 @@ function GanttChart({ project }: { project: Project }) {
                 </div>
                 <div className="relative h-8 rounded-md bg-slate-900/70" style={{ width: `${timelineWidth}px` }}>
                   <div
-                    className="absolute top-1.5 h-5 rounded-md px-2 text-[11px] leading-5 text-slate-950"
+                    className="absolute top-1.5 h-5 rounded-md px-2 text-[11px] leading-5 text-slate-950 cursor-pointer transition hover:scale-105 hover:shadow-lg"
                     style={{
                       left: `${startOffset * dayWidth}px`,
                       width: `${duration}px`,
@@ -824,10 +828,19 @@ function GanttChart({ project }: { project: Project }) {
                           : "linear-gradient(90deg,#f59e0b,#f97316)",
                       opacity: row.status === "completed" ? 0.6 : 1,
                     }}
-                    title={`${row.startDate} to ${row.endDate}`}
+                    title={row.lastMessage ? `"${row.lastMessage}"\n\n— ${row.lastMessageFrom}\n${row.lastMessageAt ? new Date(row.lastMessageAt).toLocaleString() : ''}` : `${row.startDate} to ${row.endDate}`}
                   >
                     {formatLabel(row.status)}
                   </div>
+                  {/* Hover tooltip */}
+                  {row.lastMessage && (
+                    <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-slate-700 bg-slate-900 p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl">
+                      <p className="text-sm text-white italic">"{row.lastMessage}"</p>
+                      <p className="mt-2 text-xs text-cyan-300">{row.lastMessageFrom}</p>
+                      <p className="text-xs text-slate-500">{row.lastMessageAt ? new Date(row.lastMessageAt).toLocaleString() : ''}</p>
+                      <p className="mt-1 text-[10px] text-slate-600">Source: Telegram message</p>
+                    </div>
+                  )}
                 </div>
               </div>
             );

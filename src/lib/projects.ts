@@ -23,6 +23,9 @@ export interface Task {
   endDate: string;
   dependencyTaskIds: string[];
   punchItems: PunchItem[];
+  lastMessage?: string;
+  lastMessageFrom?: string;
+  lastMessageAt?: string;
 }
 
 export interface Trade {
@@ -42,7 +45,7 @@ export interface Project {
 }
 
 export const STORAGE_KEY = "gc-tracker-projects";
-const STORAGE_VERSION = "v2";
+const STORAGE_VERSION = "v3";
 
 export const statusColors: Record<ProjectStatus, string> = {
   active: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
@@ -120,6 +123,9 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-16",
             endDate: "2026-02-28",
             dependencyTaskIds: ["t-2"],
+            lastMessage: "I'll be there Monday and be done by end of week",
+            lastMessageFrom: "Mike T. (Sparkline Electric)",
+            lastMessageAt: "2026-02-14T08:30:00",
             punchItems: [
               {
                 id: "p-2",
@@ -175,6 +181,9 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-09",
             endDate: "2026-02-20",
             dependencyTaskIds: ["t-5"],
+            lastMessage: "Waiting on part, should have it tomorrow",
+            lastMessageFrom: "Carlos (Allied Plumbing)",
+            lastMessageAt: "2026-02-13T14:22:00",
             punchItems: [
               {
                 id: "p-4",
@@ -204,6 +213,9 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-15",
             endDate: "2026-02-22",
             dependencyTaskIds: [],
+            lastMessage: "Can't start until I get the dishwasher specs from you",
+            lastMessageFrom: "Carlos (Allied Plumbing)",
+            lastMessageAt: "2026-02-14T10:15:00",
             punchItems: [
               {
                 id: "p-6",
