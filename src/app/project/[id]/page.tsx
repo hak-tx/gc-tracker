@@ -9,6 +9,7 @@ import {
   PunchStatus,
   TaskMode,
   TaskStatus,
+  ChatMessage,
   formatDate,
   formatDateTime,
   formatLabel,
@@ -61,6 +62,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   });
 
   const [addingPunchTaskKey, setAddingPunchTaskKey] = useState<string | null>(null);
+  const [selectedChatTask, setSelectedChatTask] = useState<{tradeName: string; taskTitle: string; messages: ChatMessage[]} | null>(null);
   const [newPunch, setNewPunch] = useState<PunchDraft>({
     title: "",
     priority: "medium",

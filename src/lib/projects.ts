@@ -26,6 +26,14 @@ export interface Task {
   lastMessage?: string;
   lastMessageFrom?: string;
   lastMessageAt?: string;
+  chatMessages?: ChatMessage[];
+}
+
+export interface ChatMessage {
+  id: string;
+  from: "agent" | "sub";
+  text: string;
+  timestamp: string;
 }
 
 export interface Trade {
@@ -45,7 +53,7 @@ export interface Project {
 }
 
 export const STORAGE_KEY = "gc-tracker-projects";
-const STORAGE_VERSION = "v3";
+const STORAGE_VERSION = "v4";
 
 export const statusColors: Record<ProjectStatus, string> = {
   active: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
@@ -126,6 +134,12 @@ export const defaultProjects: Project[] = [
             lastMessage: "I'll be there Monday and be done by end of week",
             lastMessageFrom: "Mike T. (Sparkline Electric)",
             lastMessageAt: "2026-02-14T08:30:00",
+            chatMessages: [
+              { id: "m1", from: "agent", text: "Hi Mike, this is your automated project check-in for the Riverside Office job. Are you ready to start lighting fixture install on Monday, Feb 16?", timestamp: "2026-02-14T07:00:00" },
+              { id: "m2", from: "sub", text: "Yes I'll be there monday morning", timestamp: "2026-02-14T08:15:00" },
+              { id: "m3", from: "agent", text: "Great! And when do you expect to finish?", timestamp: "2026-02-14T08:16:00" },
+              { id: "m4", from: "sub", text: "I'll be there Monday and be done by end of week", timestamp: "2026-02-14T08:30:00" },
+            ],
             punchItems: [
               {
                 id: "p-2",
@@ -184,6 +198,12 @@ export const defaultProjects: Project[] = [
             lastMessage: "Waiting on part, should have it tomorrow",
             lastMessageFrom: "Carlos (Allied Plumbing)",
             lastMessageAt: "2026-02-13T14:22:00",
+            chatMessages: [
+              { id: "m5", from: "agent", text: "Carlos, checking in on restroom fixtures. Any issues?", timestamp: "2026-02-13T09:00:00" },
+              { id: "m6", from: "sub", text: "I need a part for the men's room lavatory. Put in order this morning.", timestamp: "2026-02-13T11:30:00" },
+              { id: "m7", from: "agent", text: "Got it. When do you expect the part?", timestamp: "2026-02-13T11:31:00" },
+              { id: "m8", from: "sub", text: "Waiting on part, should have it tomorrow", timestamp: "2026-02-13T14:22:00" },
+            ],
             punchItems: [
               {
                 id: "p-4",
@@ -216,6 +236,12 @@ export const defaultProjects: Project[] = [
             lastMessage: "Can't start until I get the dishwasher specs from you",
             lastMessageFrom: "Carlos (Allied Plumbing)",
             lastMessageAt: "2026-02-14T10:15:00",
+            chatMessages: [
+              { id: "m9", from: "agent", text: "Carlos, kitchenette rough-in is scheduled to start Feb 15. Are your materials ready?", timestamp: "2026-02-14T07:00:00" },
+              { id: "m10", from: "sub", text: "I don't have the dishwasher specs yet. Can't start without them.", timestamp: "2026-02-14T09:30:00" },
+              { id: "m11", from: "agent", text: "I'll follow up with the GC. Can you start once we have them?", timestamp: "2026-02-14T09:31:00" },
+              { id: "m12", from: "sub", text: "Can't start until I get the dishwasher specs from you", timestamp: "2026-02-14T10:15:00" },
+            ],
             punchItems: [
               {
                 id: "p-6",
