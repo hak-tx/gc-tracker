@@ -229,18 +229,19 @@ export const defaultProjects: Project[] = [
             id: "t-7",
             title: "Kitchenette rough-in",
             mode: "sequential",
-            status: "blocked",
+            status: "in_progress",
             startDate: "2026-02-15",
             endDate: "2026-02-22",
             dependencyTaskIds: [],
-            lastMessage: "Can't start until I get the dishwasher specs from you",
-            lastMessageFrom: "Carlos (Allied Plumbing)",
-            lastMessageAt: "2026-02-14T10:15:00",
+            lastMessage: "Got the specs. Customer approved the dishwasher submittal. PDF attached.",
+            lastMessageFrom: "FactorGC Agent",
+            lastMessageAt: "2026-02-14T11:00:00",
             chatMessages: [
               { id: "m9", from: "agent", text: "Carlos, kitchenette rough-in is scheduled to start Feb 15. Are your materials ready?", timestamp: "2026-02-14T07:00:00" },
               { id: "m10", from: "sub", text: "I don't have the dishwasher specs yet. Can't start without them.", timestamp: "2026-02-14T09:30:00" },
               { id: "m11", from: "agent", text: "I'll follow up with the GC. Can you start once we have them?", timestamp: "2026-02-14T09:31:00" },
               { id: "m12", from: "sub", text: "Can't start until I get the dishwasher specs from you", timestamp: "2026-02-14T10:15:00" },
+              { id: "m13", from: "agent", text: "Got the specs. Customer approved the dishwasher submittal. PDF attached.", timestamp: "2026-02-14T11:00:00" },
             ],
             punchItems: [
               {
