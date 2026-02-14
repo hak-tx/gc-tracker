@@ -53,7 +53,7 @@ export interface Project {
 }
 
 export const STORAGE_KEY = "gc-tracker-projects";
-const STORAGE_VERSION = "v5";
+const STORAGE_VERSION = "v6";
 
 export const statusColors: Record<ProjectStatus, string> = {
   active: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
@@ -513,6 +513,34 @@ const normalizeTask = (raw: unknown, index: number, projectStartDate: string): T
     dependencyTaskIds: toArray<string>(entry.dependencyTaskIds).filter(
       (dependencyId): dependencyId is string => typeof dependencyId === "string"
     ),
+    lastMessage: typeof entry.lastMessage === "string" ? entry.lastMessage : undefined,
+    lastMessageFrom: typeof entry.lastMessageFrom === "string" ? entry.lastMessageFrom : undefined,
+    lastMessageAt: typeof entry.lastMessageAt === "string" ? entry.lastMessageAt : undefined,
+    chatMessages: toArray(entry.chatMessages)
+      .map((message, messageIndex) => {
+        const messageEntry = (message as Record<string, unknown>) ?? {};
+        const from = messageEntry.from;
+        if (from !== "agent" && from !== "sub") {
+          return null;
+        }
+        const text = typeof messageEntry.text === "string" ? messageEntry.text : "";
+        if (!text.trim()) {
+          return null;
+        }
+        return {
+          id:
+            typeof messageEntry.id === "string"
+              ? messageEntry.id
+              : `m-${index + 1}-${messageIndex + 1}`,
+          from,
+          text,
+          timestamp:
+            typeof messageEntry.timestamp === "string"
+              ? messageEntry.timestamp
+              : new Date().toISOString(),
+        };
+      })
+      .filter((message): message is ChatMessage => Boolean(message)),
     punchItems: toArray(entry.punchItems).map(normalizePunch),
   };
 };

@@ -804,7 +804,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
       lastMessage: task.lastMessage,
       lastMessageFrom: task.lastMessageFrom,
       lastMessageAt: task.lastMessageAt,
-      chatMessages: task.chatMessages || [],
+      chatMessages: task.chatMessages,
     }))
   );
 
@@ -852,6 +852,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
 
         <div className="space-y-2">
           {rows.map((row) => {
+            const hasChat = row.chatMessages && row.chatMessages.length > 0;
             const startOffset = Math.floor((toDate(row.startDate).getTime() - minDate.getTime()) / msPerDay);
             const duration =
               Math.max(1, Math.floor((toDate(row.endDate).getTime() - toDate(row.startDate).getTime()) / msPerDay) + 1) *
@@ -860,19 +861,19 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
             return (
               <div
                 key={`${row.tradeName}-${row.id}`}
-                className={`flex items-center group ${row.chatMessages.length > 0 ? "cursor-pointer hover:bg-slate-800/50 rounded" : ""}`}
-                onClick={() => row.chatMessages.length > 0 && onViewChat(row.tradeName, row.title, row.chatMessages)}
+                className={`flex items-center group ${hasChat ? "cursor-pointer hover:bg-slate-800/50 rounded" : ""}`}
+                onClick={() => hasChat && onViewChat(row.tradeName, row.title, row.chatMessages || [])}
               >
                 <div className="w-[280px] shrink-0 pr-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className={`min-w-0 truncate text-sm text-slate-200 ${row.chatMessages.length > 0 ? "text-cyan-300" : ""}`}>{row.title}</p>
-                    {row.chatMessages.length > 0 && (
+                    <p className={`min-w-0 truncate text-sm text-slate-200 ${hasChat ? "text-cyan-300" : ""}`}>{row.title}</p>
+                    {row.chatMessages && row.chatMessages.length > 0 && (
                       <button
                         type="button"
                         aria-label={`Open chat for ${row.title}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onViewChat(row.tradeName, row.title, row.chatMessages);
+                          onViewChat(row.tradeName, row.title, row.chatMessages || []);
                         }}
                         className="text-xs bg-cyan-500 text-slate-900 px-3 py-1.5 rounded font-bold hover:bg-cyan-400"
                       >
@@ -907,9 +908,9 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                       <p className="mt-2 text-xs text-cyan-300">{row.lastMessageFrom}</p>
                       <p className="text-xs text-slate-500">{row.lastMessageAt ? new Date(row.lastMessageAt).toLocaleString() : ''}</p>
                       <p className="mt-1 text-[10px] text-slate-600">Source: Telegram message</p>
-                      {row.chatMessages.length > 0 && (
+                      {row.chatMessages && row.chatMessages.length > 0 && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.title, row.chatMessages); }}
+                          onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.title, row.chatMessages || []); }}
                           className="mt-3 w-full rounded-lg bg-cyan-500 py-2 text-sm font-medium text-slate-900 hover:bg-cyan-400"
                         >
                           View Chat
