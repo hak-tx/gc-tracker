@@ -24,9 +24,6 @@ export default function Home() {
         <p className="mx-auto mt-4 max-w-xl text-xl text-cyan-300 font-medium">
           "What if... text messages from your sub saying he is starting a week late automatically updates your project schedule?"
         </p>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
-          Automated Construction Management System
-        </p>
         <a
           href="/projects"
           className="mt-10 inline-block rounded-xl bg-white px-8 py-4 text-lg font-semibold text-slate-900 transition hover:bg-slate-200"
