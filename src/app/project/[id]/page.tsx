@@ -851,11 +851,15 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
               dayWidth;
 
             return (
-              <div key={row.id} className="flex items-center group">
+              <div 
+                key={row.id} 
+                className={`flex items-center group ${row.chatMessages.length > 0 ? 'cursor-pointer hover:bg-slate-800/50 rounded' : ''}`}
+                onClick={() => row.chatMessages.length > 0 && onViewChat(row.tradeName, row.title, row.chatMessages)}
+              >
                 <div className="w-[220px] shrink-0 pr-3">
-                  <p className="truncate text-sm text-slate-200">{row.title}</p>
+                  <p className={`truncate text-sm text-slate-200 ${row.chatMessages.length > 0 ? 'text-cyan-300' : ''}`}>{row.title}</p>
                   <p className="text-xs text-slate-500">
-                    {row.tradeName} · {formatLabel(row.mode)}
+                    {row.tradeName} · {formatLabel(row.mode)} {row.chatMessages.length > 0 && <span className="text-cyan-400">· 💬</span>}
                   </p>
                 </div>
                 <div className="relative h-8 rounded-md bg-slate-900/70" style={{ width: `${timelineWidth}px` }}>
