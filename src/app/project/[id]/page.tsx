@@ -72,7 +72,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   });
 
   const [addingPunchTaskKey, setAddingPunchTaskKey] = useState<string | null>(null);
-  const [selectedChatTask, setSelectedChatTask] = useState<{tradeName: string; taskTitle: string; messages: ChatMessage[]} | null>(null);
+  const [selectedChatTask, setSelectedChatTask] = useState<{tradeName: string; subName: string; taskTitle: string; messages: ChatMessage[]} | null>(null);
   const [newPunch, setNewPunch] = useState<PunchDraft>({
     title: "",
     priority: "medium",
@@ -324,7 +324,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             <h2 className="text-lg font-semibold">Task Gantt</h2>
             <span className="text-xs text-slate-500">Timeline by task start/end dates</span>
           </div>
-          <GanttChart project={project} onViewChat={(tradeName, taskTitle, messages) => setSelectedChatTask({ tradeName, taskTitle, messages })} />
+          <GanttChart project={project} onViewChat={(tradeName, subName, taskTitle, messages) => setSelectedChatTask({ tradeName, subName, taskTitle, messages })} />
         </section>
 
         <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
@@ -549,6 +549,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                                     onClick={() =>
                                       setSelectedChatTask({
                                         tradeName: trade.name,
+                                        subName: task.lastMessageFrom || "Sub",
                                         taskTitle: task.title,
                                         messages: task.chatMessages || [],
                                       })
@@ -734,8 +735,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
               <div>
-                <h3 className="font-semibold text-white">Chat Thread</h3>
-                <p className="text-xs text-slate-400">{selectedChatTask.tradeName} - {selectedChatTask.taskTitle}</p>
+                <h3 className="font-semibold text-white">{selectedChatTask.tradeName} — {selectedChatTask.subName}</h3>
+                <p className="text-xs text-slate-400">{selectedChatTask.taskTitle}</p>
               </div>
               <button onClick={() => setSelectedChatTask(null)} className="text-slate-400 hover:text-white text-xl">✕</button>
             </div>
@@ -808,7 +809,7 @@ function SelectField({
   );
 }
 
-function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tradeName: string, taskTitle: string, messages: ChatMessage[]) => void }) {
+function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tradeName: string, subName: string, taskTitle: string, messages: ChatMessage[]) => void }) {
   const rows = project.trades.flatMap((trade) =>
     trade.tasks.map((task) => ({
       id: task.id,
@@ -879,7 +880,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
               <div
                 key={`${row.tradeName}-${row.id}`}
                 className={`flex items-center group ${hasChat ? "cursor-pointer hover:bg-slate-800/50 rounded" : ""}`}
-                onClick={() => hasChat && onViewChat(row.tradeName, row.title, row.chatMessages || [])}
+                onClick={() => hasChat && onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || [])}
               >
                 <div className="w-[280px] shrink-0 pr-3">
                   <div className="flex items-center justify-between gap-2">
@@ -890,7 +891,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                         aria-label={`Open chat for ${row.title}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onViewChat(row.tradeName, row.title, row.chatMessages || []);
+                          onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || []);
                         }}
                         className="text-xs bg-cyan-500 text-slate-900 px-3 py-1.5 rounded font-bold hover:bg-cyan-400"
                       >
@@ -927,7 +928,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                       <p className="mt-1 text-[10px] text-slate-600">Source: Telegram message</p>
                       {row.chatMessages && row.chatMessages.length > 0 && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.title, row.chatMessages || []); }}
+                          onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || []); }}
                           className="mt-3 w-full rounded-lg bg-cyan-500 py-2 text-sm font-medium text-slate-900 hover:bg-cyan-400"
                         >
                           View Chat
