@@ -25,7 +25,7 @@ export default function Home() {
           Automated Construction Management System
         </p>
         <a
-          href="/project/1"
+          href="/projects"
           className="mt-10 inline-block rounded-xl bg-white px-8 py-4 text-lg font-semibold text-slate-900 transition hover:bg-slate-200"
         >
           See It In Action
@@ -118,7 +118,7 @@ export default function Home() {
             See how FactorGC runs your project automatically.
           </p>
           <a
-            href="/project/1"
+            href="/projects"
             className="mt-8 inline-block rounded-xl bg-white px-8 py-4 text-lg font-semibold text-slate-900 transition hover:bg-slate-200"
           >
             Try The Demo
