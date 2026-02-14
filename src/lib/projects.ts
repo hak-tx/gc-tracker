@@ -1,45 +1,34 @@
 export type ProjectStatus = "active" | "completed" | "on_hold";
+export type TaskStatus = "not_started" | "in_progress" | "completed" | "blocked";
+export type TaskMode = "sequential" | "parallel";
 export type PunchStatus = "open" | "in_progress" | "resolved";
 export type PunchPriority = "low" | "medium" | "high";
-export type TaskStatus = "not_started" | "in_progress" | "completed" | "blocked";
-export type TaskType = "sequential" | "parallel";
 
 export interface PunchItem {
   id: string;
-  description: string;
+  title: string;
   status: PunchStatus;
-  timestamp: string;
-  photos: string[];
+  priority: PunchPriority;
+  createdAt: string;
   dueDate?: string;
   assignee?: string;
-  priority: PunchPriority;
-}
-
-export interface Subtask {
-  id: string;
-  description: string;
-  status: TaskStatus;
 }
 
 export interface Task {
   id: string;
-  description: string;
-  type: TaskType;
+  title: string;
+  mode: TaskMode;
   status: TaskStatus;
-  subtasks: Subtask[];
-}
-
-export interface Scope {
-  id: string;
-  name: string;
-  tasks: Task[];
+  startDate: string;
+  endDate: string;
+  dependencyTaskIds: string[];
   punchItems: PunchItem[];
 }
 
-export interface SubTrade {
+export interface Trade {
   id: string;
   name: string;
-  scopes: Scope[];
+  tasks: Task[];
 }
 
 export interface Project {
@@ -48,27 +37,36 @@ export interface Project {
   address: string;
   status: ProjectStatus;
   startDate: string;
-  subs: SubTrade[];
+  endDate?: string;
+  trades: Trade[];
 }
 
-export const statusColors = {
-  active: "bg-green-600 text-white",
-  completed: "bg-blue-600 text-white",
-  on_hold: "bg-yellow-500 text-white",
-  not_started: "bg-slate-600 text-white",
-  open: "bg-red-600 text-white",
-  in_progress: "bg-orange-500 text-white",
-  blocked: "bg-rose-700 text-white",
-  resolved: "bg-gray-600 text-white",
-} as const;
+export const STORAGE_KEY = "gc-tracker-projects";
 
-export const priorityColors: Record<PunchPriority, string> = {
-  low: "bg-emerald-700/70 text-emerald-200 border border-emerald-500/40",
-  medium: "bg-amber-700/60 text-amber-100 border border-amber-400/50",
-  high: "bg-rose-700/60 text-rose-100 border border-rose-400/50",
+export const statusColors: Record<ProjectStatus, string> = {
+  active: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
+  completed: "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40",
+  on_hold: "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40",
 };
 
-export const STORAGE_KEY = "gc-tracker-projects";
+export const taskStatusColors: Record<TaskStatus, string> = {
+  not_started: "bg-slate-500/20 text-slate-300 ring-1 ring-slate-500/40",
+  in_progress: "bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/40",
+  completed: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
+  blocked: "bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40",
+};
+
+export const punchStatusColors: Record<PunchStatus, string> = {
+  open: "bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40",
+  in_progress: "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40",
+  resolved: "bg-slate-500/20 text-slate-300 ring-1 ring-slate-500/40",
+};
+
+export const priorityColors: Record<PunchPriority, string> = {
+  low: "bg-emerald-600/20 text-emerald-200 ring-1 ring-emerald-500/30",
+  medium: "bg-amber-600/20 text-amber-200 ring-1 ring-amber-500/30",
+  high: "bg-rose-600/20 text-rose-200 ring-1 ring-rose-500/30",
+};
 
 export const defaultProjects: Project[] = [
   {
@@ -76,70 +74,76 @@ export const defaultProjects: Project[] = [
     name: "Riverside Office Renovation",
     address: "123 Main St, Austin, TX",
     status: "active",
-    startDate: "2026-01-15",
-    subs: [
+    startDate: "2026-02-01",
+    endDate: "2026-04-15",
+    trades: [
       {
-        id: "s1",
+        id: "tr-1",
         name: "Electrical",
-        scopes: [
+        tasks: [
           {
-            id: "sc1",
-            name: "Lighting Fixtures",
-            tasks: [
-              {
-                id: "t1",
-                description: "Rough-in fixture locations",
-                type: "sequential",
-                status: "in_progress",
-                subtasks: [
-                  { id: "st1", description: "Mark ceiling layout", status: "completed" },
-                  { id: "st2", description: "Verify power drops", status: "in_progress" },
-                ],
-              },
-            ],
+            id: "t-1",
+            title: "Main panel upgrade",
+            mode: "sequential",
+            status: "in_progress",
+            startDate: "2026-02-10",
+            endDate: "2026-02-20",
+            dependencyTaskIds: [],
             punchItems: [
               {
-                id: "p1",
-                description: "Install pendant lights in lobby",
+                id: "p-1",
+                title: "Label all breakers",
                 status: "open",
-                timestamp: "2026-02-10T09:30:00",
-                photos: [],
-                dueDate: "2026-02-16",
-                assignee: "Mike - Electric Co.",
-                priority: "high",
-              },
-              {
-                id: "p2",
-                description: "Replace switch in break room",
-                status: "resolved",
-                timestamp: "2026-02-08T14:15:00",
-                photos: [],
-                dueDate: "2026-02-12",
-                assignee: "Sara - Electric Co.",
                 priority: "medium",
+                createdAt: "2026-02-12T10:00:00",
+                dueDate: "2026-02-18",
+                assignee: "Sparkline Electric",
+              },
+            ],
+          },
+          {
+            id: "t-2",
+            title: "Lighting final trim",
+            mode: "parallel",
+            status: "not_started",
+            startDate: "2026-02-18",
+            endDate: "2026-02-28",
+            dependencyTaskIds: ["t-1"],
+            punchItems: [
+              {
+                id: "p-2",
+                title: "Pendant fixtures at lobby misaligned",
+                status: "in_progress",
+                priority: "high",
+                createdAt: "2026-02-13T11:30:00",
+                dueDate: "2026-02-22",
+                assignee: "Mike T.",
               },
             ],
           },
         ],
       },
       {
-        id: "s2",
+        id: "tr-2",
         name: "Plumbing",
-        scopes: [
+        tasks: [
           {
-            id: "sc2",
-            name: "Restroom Fixtures",
-            tasks: [],
+            id: "t-3",
+            title: "Restroom fixture install",
+            mode: "parallel",
+            status: "in_progress",
+            startDate: "2026-02-09",
+            endDate: "2026-02-24",
+            dependencyTaskIds: [],
             punchItems: [
               {
-                id: "p3",
-                description: "Fix leaky faucet in men's room",
-                status: "in_progress",
-                timestamp: "2026-02-11T10:00:00",
-                photos: [],
-                dueDate: "2026-02-15",
+                id: "p-3",
+                title: "Address leak at men's lavatory",
+                status: "open",
+                priority: "high",
+                createdAt: "2026-02-11T09:15:00",
+                dueDate: "2026-02-17",
                 assignee: "Allied Plumbing",
-                priority: "medium",
               },
             ],
           },
@@ -152,37 +156,176 @@ export const defaultProjects: Project[] = [
     name: "Downtown Loft Build",
     address: "456 Congress Ave, Austin, TX",
     status: "active",
-    startDate: "2026-02-01",
-    subs: [],
-  },
-  {
-    id: "3",
-    name: "Lake House Remodel",
-    address: "789 Lakeview Dr, Lake Travis, TX",
-    status: "completed",
-    startDate: "2025-11-01",
-    subs: [],
+    startDate: "2026-02-05",
+    endDate: "2026-06-01",
+    trades: [],
   },
 ];
 
-export const formatLabel = (value: string) =>
-  value.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+const toIsoDate = (value: unknown, fallback: string) => {
+  if (typeof value !== "string" || value.length < 10) {
+    return fallback;
+  }
+  return value.slice(0, 10);
+};
 
-export const formatTimestamp = (timestamp: string) =>
-  new Date(timestamp).toLocaleDateString("en-US", {
+const toArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+const normalizePunch = (raw: unknown, index: number): PunchItem => {
+  const entry = (raw as Record<string, unknown>) ?? {};
+  return {
+    id: typeof entry.id === "string" ? entry.id : `p-${index + 1}`,
+    title:
+      typeof entry.title === "string"
+        ? entry.title
+        : typeof entry.description === "string"
+          ? entry.description
+          : `Punch Item ${index + 1}`,
+    status:
+      entry.status === "in_progress" || entry.status === "resolved" || entry.status === "open"
+        ? entry.status
+        : "open",
+    priority: entry.priority === "low" || entry.priority === "high" ? entry.priority : "medium",
+    createdAt:
+      typeof entry.createdAt === "string"
+        ? entry.createdAt
+        : typeof entry.timestamp === "string"
+          ? entry.timestamp
+          : new Date().toISOString(),
+    dueDate: typeof entry.dueDate === "string" ? entry.dueDate.slice(0, 10) : undefined,
+    assignee: typeof entry.assignee === "string" ? entry.assignee : undefined,
+  };
+};
+
+const normalizeTask = (raw: unknown, index: number, projectStartDate: string): Task => {
+  const entry = (raw as Record<string, unknown>) ?? {};
+
+  const startDate = toIsoDate(entry.startDate, projectStartDate);
+  const endDate = toIsoDate(entry.endDate, startDate);
+
+  return {
+    id: typeof entry.id === "string" ? entry.id : `t-${index + 1}`,
+    title:
+      typeof entry.title === "string"
+        ? entry.title
+        : typeof entry.description === "string"
+          ? entry.description
+          : `Task ${index + 1}`,
+    mode: entry.mode === "parallel" || entry.type === "parallel" ? "parallel" : "sequential",
+    status:
+      entry.status === "in_progress" ||
+      entry.status === "completed" ||
+      entry.status === "blocked" ||
+      entry.status === "not_started"
+        ? entry.status
+        : "not_started",
+    startDate,
+    endDate,
+    dependencyTaskIds: toArray<string>(entry.dependencyTaskIds).filter(
+      (dependencyId): dependencyId is string => typeof dependencyId === "string"
+    ),
+    punchItems: toArray(entry.punchItems).map(normalizePunch),
+  };
+};
+
+const migrateTradeTasksFromScopes = (
+  scopes: unknown[],
+  projectStartDate: string,
+  tradeId: string
+): Task[] => {
+  const tasks: Task[] = [];
+
+  scopes.forEach((scopeRaw, scopeIndex) => {
+    const scope = (scopeRaw as Record<string, unknown>) ?? {};
+    const scopeName = typeof scope.name === "string" ? scope.name : `Scope ${scopeIndex + 1}`;
+
+    const scopeTasks = toArray(scope.tasks).map((task, taskIndex) =>
+      normalizeTask(task, taskIndex, projectStartDate)
+    );
+
+    tasks.push(...scopeTasks);
+
+    const scopePunch = toArray(scope.punchItems).map(normalizePunch);
+    if (scopePunch.length > 0) {
+      tasks.push({
+        id: `${tradeId}-scope-${scopeIndex + 1}-punch`,
+        title: `${scopeName} Punch List`,
+        mode: "parallel",
+        status: scopePunch.some((item) => item.status !== "resolved") ? "in_progress" : "completed",
+        startDate: projectStartDate,
+        endDate: projectStartDate,
+        dependencyTaskIds: [],
+        punchItems: scopePunch,
+      });
+    }
+  });
+
+  return tasks;
+};
+
+const normalizeTrade = (raw: unknown, index: number, projectStartDate: string): Trade => {
+  const entry = (raw as Record<string, unknown>) ?? {};
+  const id = typeof entry.id === "string" ? entry.id : `tr-${index + 1}`;
+
+  const directTasks = toArray(entry.tasks).map((task, taskIndex) =>
+    normalizeTask(task, taskIndex, projectStartDate)
+  );
+
+  const scopedTasks = migrateTradeTasksFromScopes(toArray(entry.scopes), projectStartDate, id);
+
+  return {
+    id,
+    name: typeof entry.name === "string" ? entry.name : `Trade ${index + 1}`,
+    tasks: [...directTasks, ...scopedTasks],
+  };
+};
+
+const normalizeProject = (raw: unknown, index: number): Project => {
+  const entry = (raw as Record<string, unknown>) ?? {};
+  const startDate = toIsoDate(entry.startDate, new Date().toISOString().slice(0, 10));
+
+  const tradesRaw = entry.trades ?? entry.subs;
+
+  return {
+    id: typeof entry.id === "string" ? entry.id : `${index + 1}`,
+    name: typeof entry.name === "string" ? entry.name : `Project ${index + 1}`,
+    address: typeof entry.address === "string" ? entry.address : "",
+    status:
+      entry.status === "completed" || entry.status === "on_hold" || entry.status === "active"
+        ? entry.status
+        : "active",
+    startDate,
+    endDate: typeof entry.endDate === "string" ? entry.endDate.slice(0, 10) : undefined,
+    trades: toArray(tradesRaw).map((trade, tradeIndex) =>
+      normalizeTrade(trade, tradeIndex, startDate)
+    ),
+  };
+};
+
+export const formatLabel = (value: string) =>
+  value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+export const formatDate = (value: string) =>
+  new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+export const formatDateTime = (value: string) =>
+  new Date(value).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
+    year: "numeric",
     hour: "numeric",
     minute: "2-digit",
   });
+
+export const getProjectPunchItems = (project: Project) =>
+  project.trades.flatMap((trade) => trade.tasks.flatMap((task) => task.punchItems));
 
 export const isOverdue = (item: PunchItem) => {
   if (!item.dueDate || item.status === "resolved") {
     return false;
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  return item.dueDate < today;
+  return item.dueDate < new Date().toISOString().slice(0, 10);
 };
 
 export const loadProjects = (): Project[] => {
@@ -196,23 +339,11 @@ export const loadProjects = (): Project[] => {
   }
 
   try {
-    const parsed = JSON.parse(saved) as Project[];
+    const parsed = JSON.parse(saved) as unknown;
     if (!Array.isArray(parsed)) {
       return defaultProjects;
     }
-    return parsed.map((project) => ({
-      ...project,
-      subs: project.subs.map((trade) => ({
-        ...trade,
-        scopes: trade.scopes.map((scope) => ({
-          ...scope,
-          tasks: (scope.tasks ?? []).map((task) => ({
-            ...task,
-            subtasks: task.subtasks ?? [],
-          })),
-        })),
-      })),
-    }));
+    return parsed.map(normalizeProject);
   } catch {
     return defaultProjects;
   }
@@ -222,11 +353,5 @@ export const saveProjects = (projects: Project[]) => {
   if (typeof window === "undefined") {
     return;
   }
-
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 };
-
-export const getProjectPunchItems = (project: Project) =>
-  project.subs.flatMap((trade) =>
-    trade.scopes.flatMap((scope) => scope.punchItems)
-  );

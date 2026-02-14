@@ -21,6 +21,8 @@ export default function Dashboard() {
     name: "",
     address: "",
     status: "active" as Project["status"],
+    startDate: new Date().toISOString().slice(0, 10),
+    endDate: "",
   });
 
   useEffect(() => {
@@ -40,46 +42,46 @@ export default function Dashboard() {
     });
   }, [projects, searchText, statusFilter]);
 
-  const totalPunchItems = useMemo(
+  const allPunchItems = useMemo(
     () => projects.flatMap((project) => getProjectPunchItems(project)),
     [projects]
   );
 
-  const overdueCount = useMemo(
-    () => totalPunchItems.filter((item) => isOverdue(item)).length,
-    [totalPunchItems]
-  );
-
-  const handleCreateProject = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleCreateProject = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
     const project: Project = {
       id: Date.now().toString(),
       name: newProject.name.trim(),
       address: newProject.address.trim(),
       status: newProject.status,
-      startDate: new Date().toISOString().slice(0, 10),
-      subs: [],
+      startDate: newProject.startDate,
+      endDate: newProject.endDate || undefined,
+      trades: [],
     };
 
-    setProjects((currentProjects) => [project, ...currentProjects]);
-    setNewProject({ name: "", address: "", status: "active" });
-    setIsModalOpen(false);
-  };
-
-  const closeModal = () => {
-    setNewProject({ name: "", address: "", status: "active" });
+    setProjects((current) => [project, ...current]);
+    setNewProject({
+      name: "",
+      address: "",
+      status: "active",
+      startDate: new Date().toISOString().slice(0, 10),
+      endDate: "",
+    });
     setIsModalOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <header className="border-b border-slate-700 bg-slate-800 shadow-md">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <h1 className="text-2xl font-bold text-white">GC Tracker</h1>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">GC Tracker</h1>
+            <p className="text-sm text-slate-400">Project & punch workflow hub</p>
+          </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="rounded-lg bg-blue-500 px-4 py-2 font-medium text-white transition hover:bg-blue-600"
+            className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-cyan-400"
           >
             + New Project
           </button>
@@ -87,41 +89,37 @@ export default function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <div className="rounded-lg bg-slate-800 p-6 shadow">
-            <p className="text-sm text-slate-400">Total Projects</p>
-            <p className="text-3xl font-bold text-white">{projects.length}</p>
-          </div>
-          <div className="rounded-lg bg-slate-800 p-6 shadow">
-            <p className="text-sm text-slate-400">Active</p>
-            <p className="text-3xl font-bold text-green-400">
-              {projects.filter((p) => p.status === "active").length}
-            </p>
-          </div>
-          <div className="rounded-lg bg-slate-800 p-6 shadow">
-            <p className="text-sm text-slate-400">Open Punch Items</p>
-            <p className="text-3xl font-bold text-orange-300">
-              {totalPunchItems.filter((item) => item.status !== "resolved").length}
-            </p>
-          </div>
-          <div className="rounded-lg bg-slate-800 p-6 shadow">
-            <p className="text-sm text-slate-400">Overdue</p>
-            <p className="text-3xl font-bold text-rose-400">{overdueCount}</p>
-          </div>
+        <div className="mb-7 grid grid-cols-1 gap-4 md:grid-cols-4">
+          <StatCard label="Total Projects" value={projects.length.toString()} />
+          <StatCard
+            label="Active"
+            value={projects.filter((project) => project.status === "active").length.toString()}
+            valueClass="text-emerald-300"
+          />
+          <StatCard
+            label="Open Punch Items"
+            value={allPunchItems.filter((item) => item.status !== "resolved").length.toString()}
+            valueClass="text-amber-300"
+          />
+          <StatCard
+            label="Overdue"
+            value={allPunchItems.filter((item) => isOverdue(item)).length.toString()}
+            valueClass="text-rose-300"
+          />
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <input
             type="text"
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition focus:border-blue-500"
+            onChange={(event) => setSearchText(event.target.value)}
+            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
             placeholder="Search project or address"
           />
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as "all" | Project["status"])}
-            className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+            onChange={(event) => setStatusFilter(event.target.value as "all" | Project["status"])}
+            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
           >
             <option value="all">All statuses</option>
             <option value="active">Active</option>
@@ -133,123 +131,111 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-700 bg-slate-800 shadow">
-          <div className="border-b border-slate-700 px-6 py-4">
-            <h2 className="text-lg font-semibold text-white">Projects</h2>
-          </div>
-          <div className="divide-y divide-slate-700">
+        <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70">
+          <header className="border-b border-slate-800 px-6 py-4">
+            <h2 className="text-lg font-semibold">Projects</h2>
+          </header>
+          <div className="divide-y divide-slate-800">
             {filteredProjects.length === 0 ? (
-              <div className="px-6 py-12 text-center text-sm text-slate-400">
-                No projects match your filters.
-              </div>
+              <p className="px-6 py-12 text-center text-sm text-slate-400">No matching projects.</p>
             ) : (
-              filteredProjects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/project/${project.id}`}
-                  className="block px-6 py-4 transition hover:bg-slate-700"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{project.name}</h3>
-                      <p className="mt-1 text-sm font-medium text-slate-300">{project.address}</p>
-                      <p className="mt-1 text-xs text-slate-500">Started: {project.startDate}</p>
+              filteredProjects.map((project) => {
+                const taskCount = project.trades.reduce((count, trade) => count + trade.tasks.length, 0);
+                const punchCount = getProjectPunchItems(project).length;
+
+                return (
+                  <Link
+                    key={project.id}
+                    href={`/project/${project.id}`}
+                    className="block px-6 py-4 transition hover:bg-slate-800/70"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-medium">{project.name}</h3>
+                        <p className="text-sm text-slate-300">{project.address}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Start: {project.startDate}
+                          {project.endDate ? ` · End: ${project.endDate}` : ""}
+                        </p>
+                      </div>
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusColors[project.status]}`}>
+                        {formatLabel(project.status)}
+                      </span>
                     </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[project.status]}`}
-                    >
-                      {formatLabel(project.status)}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-400">
-                    {project.subs.length} trade{project.subs.length !== 1 ? "s" : ""}
-                  </p>
-                </Link>
-              ))
+                    <p className="mt-2 text-sm text-slate-400">
+                      {project.trades.length} trade{project.trades.length !== 1 ? "s" : ""} · {taskCount} task
+                      {taskCount !== 1 ? "s" : ""} · {punchCount} punch item{punchCount !== 1 ? "s" : ""}
+                    </p>
+                  </Link>
+                );
+              })
             )}
           </div>
-        </div>
+        </section>
       </main>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
-          <div className="w-full max-w-lg rounded-xl border border-slate-700 bg-slate-800 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
-              <h2 className="text-lg font-semibold text-white">New Project</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-lg rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
+              <h2 className="text-lg font-semibold">New Project</h2>
               <button
                 type="button"
-                onClick={closeModal}
+                onClick={() => setIsModalOpen(false)}
                 className="text-slate-400 transition hover:text-white"
-                aria-label="Close new project modal"
+                aria-label="Close modal"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleCreateProject} className="space-y-4 px-6 py-5">
-              <div>
-                <label
-                  htmlFor="project-name"
-                  className="mb-1 block text-sm font-medium text-slate-200"
-                >
-                  Project Name
-                </label>
-                <input
-                  id="project-name"
-                  type="text"
+              <InputField
+                id="project-name"
+                label="Project Name"
+                value={newProject.name}
+                required
+                onChange={(value) => setNewProject((current) => ({ ...current, name: value }))}
+              />
+              <InputField
+                id="project-address"
+                label="Address"
+                value={newProject.address}
+                required
+                onChange={(value) => setNewProject((current) => ({ ...current, address: value }))}
+              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InputField
+                  id="project-start"
+                  label="Start Date"
+                  value={newProject.startDate}
+                  type="date"
                   required
-                  value={newProject.name}
-                  onChange={(e) =>
-                    setNewProject((current) => ({
-                      ...current,
-                      name: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-white placeholder-slate-500 outline-none transition focus:border-blue-500"
-                  placeholder="Enter project name"
+                  onChange={(value) => setNewProject((current) => ({ ...current, startDate: value }))}
+                />
+                <InputField
+                  id="project-end"
+                  label="End Date"
+                  value={newProject.endDate}
+                  type="date"
+                  onChange={(value) => setNewProject((current) => ({ ...current, endDate: value }))}
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="project-address"
-                  className="mb-1 block text-sm font-medium text-slate-200"
-                >
-                  Address
-                </label>
-                <input
-                  id="project-address"
-                  type="text"
-                  required
-                  value={newProject.address}
-                  onChange={(e) =>
-                    setNewProject((current) => ({
-                      ...current,
-                      address: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-white placeholder-slate-500 outline-none transition focus:border-blue-500"
-                  placeholder="Enter project address"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="project-status"
-                  className="mb-1 block text-sm font-medium text-slate-200"
-                >
+                <label htmlFor="project-status" className="mb-1 block text-sm text-slate-300">
                   Status
                 </label>
                 <select
                   id="project-status"
                   value={newProject.status}
-                  onChange={(e) =>
+                  onChange={(event) =>
                     setNewProject((current) => ({
                       ...current,
-                      status: e.target.value as Project["status"],
+                      status: event.target.value as Project["status"],
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-white outline-none transition focus:border-blue-500"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
                 >
                   <option value="active">Active</option>
                   <option value="on_hold">On Hold</option>
@@ -257,17 +243,17 @@ export default function Dashboard() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <div className="flex justify-end gap-3 border-t border-slate-800 pt-4">
                 <button
                   type="button"
-                  onClick={closeModal}
-                  className="rounded-lg border border-slate-600 px-4 py-2 font-medium text-slate-200 transition hover:bg-slate-700"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-blue-500 px-4 py-2 font-medium text-white transition hover:bg-blue-600"
+                  className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-cyan-400"
                 >
                   Create Project
                 </button>
@@ -276,6 +262,55 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+      <p className="text-sm text-slate-400">{label}</p>
+      <p className={`mt-2 text-3xl font-semibold ${valueClass ?? "text-slate-100"}`}>{value}</p>
+    </div>
+  );
+}
+
+function InputField({
+  id,
+  label,
+  value,
+  onChange,
+  required,
+  type,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  type?: "text" | "date";
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm text-slate-300">
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type ?? "text"}
+        required={required}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+      />
     </div>
   );
 }

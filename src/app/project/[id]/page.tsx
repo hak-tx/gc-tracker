@@ -5,79 +5,69 @@ import { useRouter } from "next/navigation";
 import { FormEvent, use, useEffect, useMemo, useState } from "react";
 import {
   Project,
-  TaskStatus,
-  TaskType,
   PunchPriority,
   PunchStatus,
+  TaskMode,
+  TaskStatus,
+  formatDate,
+  formatDateTime,
   formatLabel,
-  formatTimestamp,
   isOverdue,
   loadProjects,
   priorityColors,
+  punchStatusColors,
   saveProjects,
   statusColors,
+  taskStatusColors,
 } from "@/lib/projects";
 
-interface PunchDraft {
-  description: string;
-  priority: PunchPriority;
-  assignee: string;
-  dueDate: string;
-  status: PunchStatus;
-}
+const taskStatusOrder: TaskStatus[] = ["not_started", "in_progress", "blocked", "completed"];
+const punchStatusOrder: PunchStatus[] = ["open", "in_progress", "resolved"];
 
 interface TaskDraft {
-  description: string;
-  type: TaskType;
+  title: string;
+  mode: TaskMode;
+  startDate: string;
+  endDate: string;
+  dependencyTaskIds: string[];
 }
 
-const defaultPunchDraft: PunchDraft = {
-  description: "",
-  priority: "medium",
-  assignee: "",
-  dueDate: "",
-  status: "open",
-};
+interface PunchDraft {
+  title: string;
+  priority: PunchPriority;
+  status: PunchStatus;
+  dueDate: string;
+  assignee: string;
+}
 
-const defaultTaskDraft: TaskDraft = {
-  description: "",
-  type: "sequential",
-};
-
-const punchStatusOrder: PunchStatus[] = ["open", "in_progress", "resolved"];
-const taskStatusOrder: TaskStatus[] = ["not_started", "in_progress", "completed", "blocked"];
-
-const createNextId = (prefix: string, existingIds: string[]) => {
-  const normalizedExistingIds = new Set(existingIds);
-  let sequence = existingIds.length + 1;
-
-  while (normalizedExistingIds.has(`${prefix}${sequence}`)) {
-    sequence += 1;
-  }
-
-  return `${prefix}${sequence}`;
-};
+const makeId = (prefix: string) =>
+  `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
 
   const [projects, setProjects] = useState<Project[]>(() => loadProjects());
-  const [expandedTrade, setExpandedTrade] = useState<string | null>(null);
-  const [expandedScope, setExpandedScope] = useState<string | null>(null);
-
-  const [isAddingTrade, setIsAddingTrade] = useState(false);
   const [newTradeName, setNewTradeName] = useState("");
+  const [isAddingTrade, setIsAddingTrade] = useState(false);
 
-  const [addingScopeTradeId, setAddingScopeTradeId] = useState<string | null>(null);
-  const [newScopeName, setNewScopeName] = useState("");
+  const [addingTaskTradeId, setAddingTaskTradeId] = useState<string | null>(null);
+  const [newTask, setNewTask] = useState<TaskDraft>({
+    title: "",
+    mode: "sequential",
+    startDate: new Date().toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10),
+    dependencyTaskIds: [],
+  });
 
-  const [addingPunchScopeKey, setAddingPunchScopeKey] = useState<string | null>(null);
-  const [newPunchItem, setNewPunchItem] = useState<PunchDraft>(defaultPunchDraft);
-  const [addingTaskScopeKey, setAddingTaskScopeKey] = useState<string | null>(null);
-  const [newTask, setNewTask] = useState<TaskDraft>(defaultTaskDraft);
-  const [addingSubtaskTaskKey, setAddingSubtaskTaskKey] = useState<string | null>(null);
-  const [newSubtaskDescription, setNewSubtaskDescription] = useState("");
+  const [addingPunchTaskKey, setAddingPunchTaskKey] = useState<string | null>(null);
+  const [newPunch, setNewPunch] = useState<PunchDraft>({
+    title: "",
+    priority: "medium",
+    status: "open",
+    dueDate: "",
+    assignee: "",
+  });
 
   useEffect(() => {
     saveProjects(projects);
@@ -88,349 +78,183 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     [projects, resolvedParams.id]
   );
 
+  const updateProject = (updater: (project: Project) => Project) => {
+    if (!project) {
+      return;
+    }
+
+    setProjects((current) =>
+      current.map((entry) => (entry.id === project.id ? updater(entry) : entry))
+    );
+  };
+
   const handleAddTrade = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!project) {
+    const name = newTradeName.trim();
+    if (!name || !project) {
       return;
     }
 
-    const trimmedName = newTradeName.trim();
-    if (!trimmedName) {
-      return;
-    }
+    updateProject((entry) => ({
+      ...entry,
+      trades: [...entry.trades, { id: makeId("tr"), name, tasks: [] }],
+    }));
 
-    let tradeId = "";
-    setProjects((currentProjects) =>
-      currentProjects.map((entry) => {
-        if (entry.id !== project.id) {
-          return entry;
-        }
-
-        tradeId = createNextId(
-          "s",
-          entry.subs.map((trade) => trade.id)
-        );
-
-        return {
-          ...entry,
-          subs: [...entry.subs, { id: tradeId, name: trimmedName, scopes: [] }],
-        };
-      })
-    );
-
-    setExpandedTrade(tradeId);
-    setIsAddingTrade(false);
     setNewTradeName("");
+    setIsAddingTrade(false);
   };
 
-  const handleAddScope = (event: FormEvent<HTMLFormElement>, tradeId: string) => {
+  const handleAddTask = (event: FormEvent<HTMLFormElement>, tradeId: string) => {
     event.preventDefault();
     if (!project) {
       return;
     }
 
-    const trimmedName = newScopeName.trim();
-    if (!trimmedName) {
+    const title = newTask.title.trim();
+    if (!title || !newTask.startDate || !newTask.endDate) {
       return;
     }
 
-    let scopeId = "";
-    setProjects((currentProjects) =>
-      currentProjects.map((entry) => {
-        if (entry.id !== project.id) {
-          return entry;
-        }
-
-        return {
-          ...entry,
-          subs: entry.subs.map((trade) => {
-            if (trade.id !== tradeId) {
-              return trade;
-            }
-
-            scopeId = createNextId(
-              "sc",
-              trade.scopes.map((scope) => scope.id)
-            );
-
-            return {
+    updateProject((entry) => ({
+      ...entry,
+      trades: entry.trades.map((trade) =>
+        trade.id === tradeId
+          ? {
               ...trade,
-              scopes: [...trade.scopes, { id: scopeId, name: trimmedName, tasks: [], punchItems: [] }],
-            };
-          }),
-        };
-      })
-    );
+              tasks: [
+                ...trade.tasks,
+                {
+                  id: makeId("t"),
+                  title,
+                  mode: newTask.mode,
+                  status: "not_started",
+                  startDate: newTask.startDate,
+                  endDate: newTask.endDate,
+                  dependencyTaskIds: newTask.dependencyTaskIds,
+                  punchItems: [],
+                },
+              ],
+            }
+          : trade
+      ),
+    }));
 
-    setExpandedTrade(tradeId);
-    setExpandedScope(scopeId);
-    setAddingScopeTradeId(null);
-    setNewScopeName("");
+    setAddingTaskTradeId(null);
+    setNewTask({
+      title: "",
+      mode: "sequential",
+      startDate: project.startDate,
+      endDate: project.endDate ?? project.startDate,
+      dependencyTaskIds: [],
+    });
   };
 
-  const handleAddPunchItem = (
-    event: FormEvent<HTMLFormElement>,
-    tradeId: string,
-    scopeId: string
-  ) => {
+  const handleAddPunchItem = (event: FormEvent<HTMLFormElement>, tradeId: string, taskId: string) => {
     event.preventDefault();
     if (!project) {
       return;
     }
 
-    const trimmedDescription = newPunchItem.description.trim();
-    if (!trimmedDescription) {
+    const title = newPunch.title.trim();
+    if (!title) {
       return;
     }
 
-    setProjects((currentProjects) =>
-      currentProjects.map((entry) =>
-        entry.id === project.id
+    updateProject((entry) => ({
+      ...entry,
+      trades: entry.trades.map((trade) =>
+        trade.id === tradeId
           ? {
-              ...entry,
-              subs: entry.subs.map((trade) =>
-                trade.id === tradeId
+              ...trade,
+              tasks: trade.tasks.map((task) =>
+                task.id === taskId
                   ? {
-                      ...trade,
-                      scopes: trade.scopes.map((scope) =>
-                        scope.id === scopeId
-                          ? {
-                              ...scope,
-                              punchItems: [
-                                {
-                                  id: createNextId(
-                                    "p",
-                                    scope.punchItems.map((item) => item.id)
-                                  ),
-                                  description: trimmedDescription,
-                                  status: newPunchItem.status,
-                                  timestamp: new Date().toISOString(),
-                                  photos: [],
-                                  dueDate: newPunchItem.dueDate || undefined,
-                                  assignee: newPunchItem.assignee.trim() || undefined,
-                                  priority: newPunchItem.priority,
-                                },
-                                ...scope.punchItems,
-                              ],
-                            }
-                          : scope
-                      ),
+                      ...task,
+                      punchItems: [
+                        {
+                          id: makeId("p"),
+                          title,
+                          status: newPunch.status,
+                          priority: newPunch.priority,
+                          createdAt: new Date().toISOString(),
+                          dueDate: newPunch.dueDate || undefined,
+                          assignee: newPunch.assignee.trim() || undefined,
+                        },
+                        ...task.punchItems,
+                      ],
                     }
-                  : trade
+                  : task
               ),
             }
-          : entry
-      )
-    );
+          : trade
+      ),
+    }));
 
-    setAddingPunchScopeKey(null);
-    setNewPunchItem(defaultPunchDraft);
+    setAddingPunchTaskKey(null);
+    setNewPunch({ title: "", priority: "medium", status: "open", dueDate: "", assignee: "" });
   };
 
-  const handleAddTask = (event: FormEvent<HTMLFormElement>, tradeId: string, scopeId: string) => {
-    event.preventDefault();
-    if (!project) {
-      return;
-    }
-
-    const trimmedDescription = newTask.description.trim();
-    if (!trimmedDescription) {
-      return;
-    }
-
-    setProjects((currentProjects) =>
-      currentProjects.map((entry) =>
-        entry.id === project.id
+  const cycleTaskStatus = (tradeId: string, taskId: string) => {
+    updateProject((entry) => ({
+      ...entry,
+      trades: entry.trades.map((trade) =>
+        trade.id === tradeId
           ? {
-              ...entry,
-              subs: entry.subs.map((trade) =>
-                trade.id === tradeId
+              ...trade,
+              tasks: trade.tasks.map((task) =>
+                task.id === taskId
                   ? {
-                      ...trade,
-                      scopes: trade.scopes.map((scope) =>
-                        scope.id === scopeId
-                          ? {
-                              ...scope,
-                              tasks: [
-                                ...(scope.tasks ?? []),
-                                {
-                                  id: createNextId(
-                                    "t",
-                                    (scope.tasks ?? []).map((task) => task.id)
-                                  ),
-                                  description: trimmedDescription,
-                                  type: newTask.type,
-                                  status: "not_started",
-                                  subtasks: [],
-                                },
-                              ],
-                            }
-                          : scope
-                      ),
+                      ...task,
+                      status:
+                        taskStatusOrder[
+                          (taskStatusOrder.indexOf(task.status) + 1) % taskStatusOrder.length
+                        ],
                     }
-                  : trade
+                  : task
               ),
             }
-          : entry
-      )
-    );
-
-    setAddingTaskScopeKey(null);
-    setNewTask(defaultTaskDraft);
+          : trade
+      ),
+    }));
   };
 
-  const handleAddSubtask = (
-    event: FormEvent<HTMLFormElement>,
-    tradeId: string,
-    scopeId: string,
-    taskId: string
-  ) => {
-    event.preventDefault();
-    if (!project) {
-      return;
-    }
-
-    const trimmedDescription = newSubtaskDescription.trim();
-    if (!trimmedDescription) {
-      return;
-    }
-
-    setProjects((currentProjects) =>
-      currentProjects.map((entry) =>
-        entry.id === project.id
+  const cyclePunchStatus = (tradeId: string, taskId: string, itemId: string) => {
+    updateProject((entry) => ({
+      ...entry,
+      trades: entry.trades.map((trade) =>
+        trade.id === tradeId
           ? {
-              ...entry,
-              subs: entry.subs.map((trade) =>
-                trade.id === tradeId
+              ...trade,
+              tasks: trade.tasks.map((task) =>
+                task.id === taskId
                   ? {
-                      ...trade,
-                      scopes: trade.scopes.map((scope) =>
-                        scope.id === scopeId
+                      ...task,
+                      punchItems: task.punchItems.map((item) =>
+                        item.id === itemId
                           ? {
-                              ...scope,
-                              tasks: (scope.tasks ?? []).map((task) =>
-                                task.id === taskId
-                                  ? {
-                                      ...task,
-                                      subtasks: [
-                                        ...task.subtasks,
-                                        {
-                                          id: createNextId(
-                                            "st",
-                                            task.subtasks.map((subtask) => subtask.id)
-                                          ),
-                                          description: trimmedDescription,
-                                          status: "not_started",
-                                        },
-                                      ],
-                                    }
-                                  : task
-                              ),
+                              ...item,
+                              status:
+                                punchStatusOrder[
+                                  (punchStatusOrder.indexOf(item.status) + 1) % punchStatusOrder.length
+                                ],
                             }
-                          : scope
+                          : item
                       ),
                     }
-                  : trade
+                  : task
               ),
             }
-          : entry
-      )
-    );
-
-    setAddingSubtaskTaskKey(null);
-    setNewSubtaskDescription("");
-  };
-
-  const handleCyclePunchStatus = (tradeId: string, scopeId: string, itemId: string) => {
-    if (!project) {
-      return;
-    }
-
-    setProjects((currentProjects) =>
-      currentProjects.map((entry) =>
-        entry.id === project.id
-          ? {
-              ...entry,
-              subs: entry.subs.map((trade) =>
-                trade.id === tradeId
-                  ? {
-                      ...trade,
-                      scopes: trade.scopes.map((scope) =>
-                        scope.id === scopeId
-                          ? {
-                              ...scope,
-                              punchItems: scope.punchItems.map((item) =>
-                                item.id === itemId
-                                  ? {
-                                      ...item,
-                                      status:
-                                        punchStatusOrder[
-                                          (punchStatusOrder.indexOf(item.status) + 1) %
-                                            punchStatusOrder.length
-                                        ],
-                                    }
-                                  : item
-                              ),
-                            }
-                          : scope
-                      ),
-                    }
-                  : trade
-              ),
-            }
-          : entry
-      )
-    );
-  };
-
-  const handleCycleTaskStatus = (tradeId: string, scopeId: string, taskId: string) => {
-    if (!project) {
-      return;
-    }
-
-    setProjects((currentProjects) =>
-      currentProjects.map((entry) =>
-        entry.id === project.id
-          ? {
-              ...entry,
-              subs: entry.subs.map((trade) =>
-                trade.id === tradeId
-                  ? {
-                      ...trade,
-                      scopes: trade.scopes.map((scope) =>
-                        scope.id === scopeId
-                          ? {
-                              ...scope,
-                              tasks: (scope.tasks ?? []).map((task) =>
-                                task.id === taskId
-                                  ? {
-                                      ...task,
-                                      status:
-                                        taskStatusOrder[
-                                          (taskStatusOrder.indexOf(task.status) + 1) %
-                                            taskStatusOrder.length
-                                        ],
-                                    }
-                                  : task
-                              ),
-                            }
-                          : scope
-                      ),
-                    }
-                  : trade
-              ),
-            }
-          : entry
-      )
-    );
+          : trade
+      ),
+    }));
   };
 
   if (!project) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-900">
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-200">
         <div className="text-center">
-          <p className="mb-4 text-slate-400">Project not found</p>
-          <Link href="/" className="text-blue-400 hover:underline">
+          <p className="mb-3 text-slate-400">Project not found</p>
+          <Link href="/" className="text-cyan-300 hover:underline">
             Back to Dashboard
           </Link>
         </div>
@@ -438,56 +262,76 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     );
   }
 
+  const totalTasks = project.trades.reduce((count, trade) => count + trade.tasks.length, 0);
+  const totalPunchItems = project.trades.flatMap((trade) => trade.tasks.flatMap((task) => task.punchItems));
+
   return (
-    <div className="min-h-screen bg-slate-900">
-      <header className="border-b border-slate-700 bg-slate-800 shadow-md">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 py-4">
-          <div className="flex items-center gap-4">
-            <button onClick={() => router.back()} className="text-slate-400 hover:text-white">
+          <div className="flex items-center gap-3">
+            <button onClick={() => router.back()} className="text-sm text-slate-400 hover:text-white">
               ← Back
             </button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-white">{project.name}</h1>
-              <p className="text-sm text-slate-300">{project.address}</p>
+              <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
+              <p className="text-sm text-slate-400">{project.address}</p>
             </div>
-            <span
-              className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[project.status]}`}
-            >
+            <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusColors[project.status]}`}>
               {formatLabel(project.status)}
             </span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="rounded-lg border border-slate-700 bg-slate-800 shadow">
-          <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
-            <h2 className="text-lg font-semibold text-white">Trades & Scopes</h2>
+      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <SummaryCard label="Trades" value={project.trades.length.toString()} />
+          <SummaryCard label="Tasks" value={totalTasks.toString()} valueClass="text-cyan-300" />
+          <SummaryCard
+            label="Open Punch"
+            value={totalPunchItems.filter((item) => item.status !== "resolved").length.toString()}
+            valueClass="text-amber-300"
+          />
+          <SummaryCard
+            label="Overdue"
+            value={totalPunchItems.filter((item) => isOverdue(item)).length.toString()}
+            valueClass="text-rose-300"
+          />
+        </div>
+
+        <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Task Gantt</h2>
+            <span className="text-xs text-slate-500">Timeline by task start/end dates</span>
+          </div>
+          <GanttChart project={project} />
+        </section>
+
+        <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
+          <header className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+            <h2 className="text-lg font-semibold">Trades</h2>
             <button
               onClick={() => {
                 setIsAddingTrade((current) => !current);
                 setNewTradeName("");
               }}
-              className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
+              className="rounded-lg bg-cyan-500 px-3 py-1.5 text-sm font-medium text-slate-950 transition hover:bg-cyan-400"
             >
               + Add Trade
             </button>
-          </div>
+          </header>
 
           {isAddingTrade && (
-            <form onSubmit={handleAddTrade} className="border-b border-slate-700 px-6 py-4">
-              <label htmlFor="trade-name" className="mb-2 block text-sm font-medium text-slate-200">
-                Trade Name
-              </label>
-              <div className="flex flex-col gap-2 md:flex-row">
+            <form onSubmit={handleAddTrade} className="border-b border-slate-800 px-4 py-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <input
-                  id="trade-name"
                   type="text"
                   required
                   value={newTradeName}
                   onChange={(event) => setNewTradeName(event.target.value)}
                   placeholder="Electrical, Plumbing, HVAC..."
-                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
                 />
                 <div className="flex gap-2">
                   <button
@@ -496,13 +340,13 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                       setIsAddingTrade(false);
                       setNewTradeName("");
                     }}
-                    className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+                    className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
+                    className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400"
                   >
                     Save Trade
                   </button>
@@ -511,545 +355,485 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </form>
           )}
 
-          {project.subs.length === 0 ? (
-            <div className="px-6 py-12 text-center text-slate-400">No trades added yet</div>
+          {project.trades.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-slate-400">No trades added yet.</div>
           ) : (
-            <div className="divide-y divide-slate-700">
-              {project.subs.map((trade) => (
-                <div key={trade.id}>
-                  <div
-                    className="flex cursor-pointer items-center justify-between px-6 py-4 transition hover:bg-slate-700"
-                    onClick={() => setExpandedTrade(expandedTrade === trade.id ? null : trade.id)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg text-slate-400">
-                        {expandedTrade === trade.id ? "▼" : "▶"}
-                      </span>
-                      <span className="font-medium text-white">{trade.name}</span>
-                      <span className="text-sm text-slate-500">
-                        ({trade.scopes.length} scope{trade.scopes.length !== 1 ? "s" : ""})
-                      </span>
+            <div className="divide-y divide-slate-800">
+              {project.trades.map((trade) => (
+                <article key={trade.id} className="px-4 py-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">{trade.name}</h3>
+                      <p className="text-xs text-slate-500">{trade.tasks.length} task(s)</p>
                     </div>
                     <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setExpandedTrade(trade.id);
-                        setAddingScopeTradeId(
-                          addingScopeTradeId === trade.id ? null : trade.id
-                        );
-                        setNewScopeName("");
+                      onClick={() => {
+                        setAddingTaskTradeId(addingTaskTradeId === trade.id ? null : trade.id);
+                        setNewTask({
+                          title: "",
+                          mode: "sequential",
+                          startDate: project.startDate,
+                          endDate: project.endDate ?? project.startDate,
+                          dependencyTaskIds: [],
+                        });
                       }}
-                      className="text-sm text-blue-400 hover:underline"
+                      className="text-sm text-cyan-300 hover:text-cyan-200"
                     >
-                      + Add Scope
+                      + Add Task
                     </button>
                   </div>
 
-                  {expandedTrade === trade.id && (
-                    <div>
-                      {addingScopeTradeId === trade.id && (
-                        <form
-                          onSubmit={(event) => handleAddScope(event, trade.id)}
-                          className="border-t border-slate-700 bg-slate-900/50 px-6 py-4"
-                        >
-                          <label
-                            htmlFor={`scope-${trade.id}`}
-                            className="mb-2 block text-sm font-medium text-slate-200"
+                  {addingTaskTradeId === trade.id && (
+                    <form
+                      onSubmit={(event) => handleAddTask(event, trade.id)}
+                      className="mb-4 space-y-3 rounded-lg border border-slate-800 bg-slate-950/80 p-3"
+                    >
+                      <div>
+                        <label className="mb-1 block text-xs text-slate-400">Task title</label>
+                        <input
+                          type="text"
+                          required
+                          value={newTask.title}
+                          onChange={(event) =>
+                            setNewTask((current) => ({ ...current, title: event.target.value }))
+                          }
+                          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div>
+                          <label className="mb-1 block text-xs text-slate-400">Mode</label>
+                          <select
+                            value={newTask.mode}
+                            onChange={(event) =>
+                              setNewTask((current) => ({
+                                ...current,
+                                mode: event.target.value as TaskMode,
+                              }))
+                            }
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
                           >
-                            Scope Name
-                          </label>
-                          <div className="flex flex-col gap-2 md:flex-row">
-                            <input
-                              id={`scope-${trade.id}`}
-                              type="text"
-                              required
-                              value={newScopeName}
-                              onChange={(event) => setNewScopeName(event.target.value)}
-                              placeholder="Lighting fixtures, Final trim..."
-                              className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAddingScopeTradeId(null);
-                                  setNewScopeName("");
-                                }}
-                                className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                type="submit"
-                                className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
-                              >
-                                Save Scope
-                              </button>
-                            </div>
-                          </div>
-                        </form>
-                      )}
-
-                      {trade.scopes.length === 0 ? (
-                        <div className="border-t border-slate-700 px-6 py-4 text-sm text-slate-500">
-                          No scopes yet
+                            <option value="sequential">Sequential</option>
+                            <option value="parallel">Parallel</option>
+                          </select>
                         </div>
-                      ) : (
-                        trade.scopes.map((scope) => {
-                          const punchKey = `${trade.id}:${scope.id}`;
-                          return (
-                            <div key={scope.id}>
-                              <div
-                                className="flex cursor-pointer items-center justify-between border-t border-slate-700 px-6 py-3 transition hover:bg-slate-700"
-                                onClick={() =>
-                                  setExpandedScope(expandedScope === scope.id ? null : scope.id)
-                                }
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span className="text-slate-500">
-                                    {expandedScope === scope.id ? "▼" : "▶"}
-                                  </span>
-                                  <span className="text-slate-200">{scope.name}</span>
-                                  <span className="text-sm text-slate-500">
-                                    ({(scope.tasks ?? []).length} tasks, {scope.punchItems.length} items)
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                  <button
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setExpandedScope(scope.id);
-                                      setAddingTaskScopeKey(
-                                        addingTaskScopeKey === punchKey ? null : punchKey
-                                      );
-                                      setNewTask(defaultTaskDraft);
-                                    }}
-                                    className="text-sm text-blue-400 hover:underline"
-                                  >
-                                    + Add Task
-                                  </button>
-                                  <button
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setExpandedScope(scope.id);
-                                      setAddingPunchScopeKey(
-                                        addingPunchScopeKey === punchKey ? null : punchKey
-                                      );
-                                      setNewPunchItem(defaultPunchDraft);
-                                    }}
-                                    className="text-sm text-blue-400 hover:underline"
-                                  >
-                                    + Add Punch Item
-                                  </button>
-                                </div>
-                              </div>
+                        <div>
+                          <label className="mb-1 block text-xs text-slate-400">Start</label>
+                          <input
+                            type="date"
+                            required
+                            value={newTask.startDate}
+                            onChange={(event) =>
+                              setNewTask((current) => ({ ...current, startDate: event.target.value }))
+                            }
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs text-slate-400">End</label>
+                          <input
+                            type="date"
+                            required
+                            value={newTask.endDate}
+                            onChange={(event) =>
+                              setNewTask((current) => ({ ...current, endDate: event.target.value }))
+                            }
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                          />
+                        </div>
+                      </div>
 
-                              {addingTaskScopeKey === punchKey && (
-                                <form
-                                  onSubmit={(event) => handleAddTask(event, trade.id, scope.id)}
-                                  className="space-y-3 border-t border-slate-700 bg-slate-900/60 px-8 py-4"
+                      {trade.tasks.length > 0 && (
+                        <div>
+                          <p className="mb-1 text-xs text-slate-400">Dependencies</p>
+                          <div className="flex flex-wrap gap-2">
+                            {trade.tasks.map((task) => {
+                              const checked = newTask.dependencyTaskIds.includes(task.id);
+                              return (
+                                <label
+                                  key={task.id}
+                                  className="inline-flex items-center gap-2 rounded-md border border-slate-700 px-2 py-1 text-xs"
                                 >
-                                  <div>
-                                    <label
-                                      htmlFor={`task-desc-${punchKey}`}
-                                      className="mb-1 block text-sm font-medium text-slate-200"
-                                    >
-                                      Task Description
-                                    </label>
-                                    <textarea
-                                      id={`task-desc-${punchKey}`}
-                                      required
-                                      value={newTask.description}
-                                      onChange={(event) =>
-                                        setNewTask((current) => ({
-                                          ...current,
-                                          description: event.target.value,
-                                        }))
-                                      }
-                                      rows={2}
-                                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label
-                                      htmlFor={`task-type-${punchKey}`}
-                                      className="mb-1 block text-sm font-medium text-slate-200"
-                                    >
-                                      Type
-                                    </label>
-                                    <select
-                                      id={`task-type-${punchKey}`}
-                                      value={newTask.type}
-                                      onChange={(event) =>
-                                        setNewTask((current) => ({
-                                          ...current,
-                                          type: event.target.value as TaskType,
-                                        }))
-                                      }
-                                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                                    >
-                                      <option value="sequential">Sequential</option>
-                                      <option value="parallel">Parallel</option>
-                                    </select>
-                                  </div>
-
-                                  <div className="flex justify-end gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setAddingTaskScopeKey(null);
-                                        setNewTask(defaultTaskDraft);
-                                      }}
-                                      className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      type="submit"
-                                      className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
-                                    >
-                                      Save Task
-                                    </button>
-                                  </div>
-                                </form>
-                              )}
-
-                              {addingPunchScopeKey === punchKey && (
-                                <form
-                                  onSubmit={(event) => handleAddPunchItem(event, trade.id, scope.id)}
-                                  className="space-y-3 border-t border-slate-700 bg-slate-900/60 px-8 py-4"
-                                >
-                                  <div>
-                                    <label
-                                      htmlFor={`desc-${punchKey}`}
-                                      className="mb-1 block text-sm font-medium text-slate-200"
-                                    >
-                                      Description
-                                    </label>
-                                    <textarea
-                                      id={`desc-${punchKey}`}
-                                      required
-                                      value={newPunchItem.description}
-                                      onChange={(event) =>
-                                        setNewPunchItem((current) => ({
-                                          ...current,
-                                          description: event.target.value,
-                                        }))
-                                      }
-                                      rows={2}
-                                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                                    />
-                                  </div>
-
-                                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-                                    <div>
-                                      <label
-                                        htmlFor={`priority-${punchKey}`}
-                                        className="mb-1 block text-sm font-medium text-slate-200"
-                                      >
-                                        Priority
-                                      </label>
-                                      <select
-                                        id={`priority-${punchKey}`}
-                                        value={newPunchItem.priority}
-                                        onChange={(event) =>
-                                          setNewPunchItem((current) => ({
-                                            ...current,
-                                            priority: event.target.value as PunchPriority,
-                                          }))
-                                        }
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                                      >
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                      </select>
-                                    </div>
-
-                                    <div>
-                                      <label
-                                        htmlFor={`assignee-${punchKey}`}
-                                        className="mb-1 block text-sm font-medium text-slate-200"
-                                      >
-                                        Assignee
-                                      </label>
-                                      <input
-                                        id={`assignee-${punchKey}`}
-                                        type="text"
-                                        value={newPunchItem.assignee}
-                                        onChange={(event) =>
-                                          setNewPunchItem((current) => ({
-                                            ...current,
-                                            assignee: event.target.value,
-                                          }))
-                                        }
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                                      />
-                                    </div>
-
-                                    <div>
-                                      <label
-                                        htmlFor={`due-${punchKey}`}
-                                        className="mb-1 block text-sm font-medium text-slate-200"
-                                      >
-                                        Due Date
-                                      </label>
-                                      <input
-                                        id={`due-${punchKey}`}
-                                        type="date"
-                                        value={newPunchItem.dueDate}
-                                        onChange={(event) =>
-                                          setNewPunchItem((current) => ({
-                                            ...current,
-                                            dueDate: event.target.value,
-                                          }))
-                                        }
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                                      />
-                                    </div>
-
-                                    <div>
-                                      <label
-                                        htmlFor={`status-${punchKey}`}
-                                        className="mb-1 block text-sm font-medium text-slate-200"
-                                      >
-                                        Status
-                                      </label>
-                                      <select
-                                        id={`status-${punchKey}`}
-                                        value={newPunchItem.status}
-                                        onChange={(event) =>
-                                          setNewPunchItem((current) => ({
-                                            ...current,
-                                            status: event.target.value as PunchStatus,
-                                          }))
-                                        }
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                                      >
-                                        <option value="open">Open</option>
-                                        <option value="in_progress">In Progress</option>
-                                        <option value="resolved">Resolved</option>
-                                      </select>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex justify-end gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setAddingPunchScopeKey(null);
-                                        setNewPunchItem(defaultPunchDraft);
-                                      }}
-                                      className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      type="submit"
-                                      className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
-                                    >
-                                      Save Punch Item
-                                    </button>
-                                  </div>
-                                </form>
-                              )}
-
-                              {expandedScope === scope.id && (
-                                <div className="grid gap-4 border-t border-slate-700 bg-slate-900/50 px-8 py-4 lg:grid-cols-2">
-                                  <div className="rounded-lg border border-slate-700 bg-slate-900/70">
-                                    <div className="border-b border-slate-700 px-4 py-2 text-sm font-semibold text-slate-100">
-                                      Tasks
-                                    </div>
-                                    {(scope.tasks ?? []).length === 0 ? (
-                                      <div className="px-4 py-3 text-sm text-slate-500">No tasks</div>
-                                    ) : (
-                                      (scope.tasks ?? []).map((task) => {
-                                        const subtaskKey = `${punchKey}:${task.id}`;
-                                        return (
-                                          <div
-                                            key={task.id}
-                                            className="border-t border-slate-700 px-4 py-3 first:border-t-0"
-                                          >
-                                            <div className="flex items-start justify-between gap-3">
-                                              <div>
-                                                <p className="text-sm font-medium text-slate-200">
-                                                  {task.description}
-                                                </p>
-                                                <span className="mt-2 inline-block rounded-full border border-slate-600 bg-slate-800 px-2 py-1 text-xs text-slate-300">
-                                                  {formatLabel(task.type)}
-                                                </span>
-                                              </div>
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  handleCycleTaskStatus(trade.id, scope.id, task.id)
-                                                }
-                                                className={`rounded px-2 py-1 text-xs font-medium transition hover:opacity-80 ${statusColors[task.status]}`}
-                                              >
-                                                {formatLabel(task.status)}
-                                              </button>
-                                            </div>
-
-                                            <div className="mt-3 space-y-2">
-                                              {task.subtasks.length === 0 ? (
-                                                <p className="text-xs text-slate-500">No subtasks</p>
-                                              ) : (
-                                                task.subtasks.map((subtask) => (
-                                                  <div
-                                                    key={subtask.id}
-                                                    className="flex items-center justify-between rounded-md border border-slate-700 bg-slate-800/60 px-2 py-1"
-                                                  >
-                                                    <p className="text-xs text-slate-300">
-                                                      {subtask.description}
-                                                    </p>
-                                                    <span
-                                                      className={`rounded px-2 py-1 text-[11px] font-medium ${statusColors[subtask.status]}`}
-                                                    >
-                                                      {formatLabel(subtask.status)}
-                                                    </span>
-                                                  </div>
-                                                ))
-                                              )}
-                                            </div>
-
-                                            <div className="mt-3">
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  setAddingSubtaskTaskKey(
-                                                    addingSubtaskTaskKey === subtaskKey
-                                                      ? null
-                                                      : subtaskKey
-                                                  );
-                                                  setNewSubtaskDescription("");
-                                                }}
-                                                className="text-xs text-blue-400 hover:underline"
-                                              >
-                                                + Add Subtask
-                                              </button>
-                                            </div>
-
-                                            {addingSubtaskTaskKey === subtaskKey && (
-                                              <form
-                                                onSubmit={(event) =>
-                                                  handleAddSubtask(
-                                                    event,
-                                                    trade.id,
-                                                    scope.id,
-                                                    task.id
-                                                  )
-                                                }
-                                                className="mt-3 space-y-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
-                                              >
-                                                <input
-                                                  type="text"
-                                                  required
-                                                  value={newSubtaskDescription}
-                                                  onChange={(event) =>
-                                                    setNewSubtaskDescription(event.target.value)
-                                                  }
-                                                  placeholder="Subtask description"
-                                                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
-                                                />
-                                                <div className="flex justify-end gap-2">
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                      setAddingSubtaskTaskKey(null);
-                                                      setNewSubtaskDescription("");
-                                                    }}
-                                                    className="rounded-lg border border-slate-600 px-3 py-1 text-xs font-medium text-slate-200 transition hover:bg-slate-700"
-                                                  >
-                                                    Cancel
-                                                  </button>
-                                                  <button
-                                                    type="submit"
-                                                    className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-blue-600"
-                                                  >
-                                                    Save Subtask
-                                                  </button>
-                                                </div>
-                                              </form>
-                                            )}
-                                          </div>
-                                        );
-                                      })
-                                    )}
-                                  </div>
-
-                                  <div className="rounded-lg border border-slate-700 bg-slate-900/70">
-                                    <div className="border-b border-slate-700 px-4 py-2 text-sm font-semibold text-slate-100">
-                                      Punch List
-                                    </div>
-                                    {scope.punchItems.length === 0 ? (
-                                      <div className="px-4 py-3 text-sm text-slate-500">
-                                        No punch items
-                                      </div>
-                                    ) : (
-                                      scope.punchItems.map((item) => (
-                                        <div
-                                          key={item.id}
-                                          className="flex items-start justify-between gap-3 border-t border-slate-700 px-4 py-3 first:border-t-0"
-                                        >
-                                          <div>
-                                            <p className="text-sm font-medium text-slate-200">
-                                              {item.description}
-                                            </p>
-                                            <p className="mt-1 text-xs text-slate-500">
-                                              {formatTimestamp(item.timestamp)}
-                                            </p>
-                                            <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                                              <span
-                                                className={`rounded-full px-2 py-1 font-medium ${priorityColors[item.priority]}`}
-                                              >
-                                                {formatLabel(item.priority)}
-                                              </span>
-                                              {item.assignee && (
-                                                <span className="rounded-full border border-slate-600 bg-slate-800 px-2 py-1 text-slate-300">
-                                                  {item.assignee}
-                                                </span>
-                                              )}
-                                              {item.dueDate && (
-                                                <span
-                                                  className={`rounded-full border px-2 py-1 ${
-                                                    isOverdue(item)
-                                                      ? "border-rose-400/40 bg-rose-900/30 text-rose-200"
-                                                      : "border-slate-600 bg-slate-800 text-slate-300"
-                                                  }`}
-                                                >
-                                                  Due {item.dueDate}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              handleCyclePunchStatus(trade.id, scope.id, item.id)
-                                            }
-                                            className={`rounded px-2 py-1 text-xs font-medium transition hover:opacity-80 ${statusColors[item.status]}`}
-                                          >
-                                            {formatLabel(item.status)}
-                                          </button>
-                                        </div>
-                                      ))
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(event) => {
+                                      setNewTask((current) => ({
+                                        ...current,
+                                        dependencyTaskIds: event.target.checked
+                                          ? [...current.dependencyTaskIds, task.id]
+                                          : current.dependencyTaskIds.filter((id) => id !== task.id),
+                                      }));
+                                    }}
+                                  />
+                                  <span className="text-slate-300">{task.title}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
+
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddingTaskTradeId(null);
+                            setNewTask({
+                              title: "",
+                              mode: "sequential",
+                              startDate: project.startDate,
+                              endDate: project.endDate ?? project.startDate,
+                              dependencyTaskIds: [],
+                            });
+                          }}
+                          className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400"
+                        >
+                          Save Task
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {trade.tasks.length === 0 ? (
+                    <p className="text-sm text-slate-500">No tasks yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {trade.tasks.map((task) => {
+                        const key = `${trade.id}:${task.id}`;
+                        const dependencies = task.dependencyTaskIds
+                          .map((dependencyId) =>
+                            trade.tasks.find((candidate) => candidate.id === dependencyId)?.title
+                          )
+                          .filter((title): title is string => Boolean(title));
+
+                        return (
+                          <div key={task.id} className="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <h4 className="font-medium">{task.title}</h4>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {formatDate(task.startDate)} - {formatDate(task.endDate)} · {formatLabel(task.mode)}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  onClick={() => cycleTaskStatus(trade.id, task.id)}
+                                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${taskStatusColors[task.status]}`}
+                                >
+                                  {formatLabel(task.status)}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setAddingPunchTaskKey(addingPunchTaskKey === key ? null : key);
+                                    setNewPunch({
+                                      title: "",
+                                      priority: "medium",
+                                      status: "open",
+                                      dueDate: "",
+                                      assignee: "",
+                                    });
+                                  }}
+                                  className="text-xs text-cyan-300 hover:text-cyan-200"
+                                >
+                                  + Add Punch Item
+                                </button>
+                              </div>
+                            </div>
+
+                            {dependencies.length > 0 && (
+                              <p className="mt-2 text-xs text-slate-400">
+                                Depends on: <span className="text-slate-300">{dependencies.join(", ")}</span>
+                              </p>
+                            )}
+
+                            {addingPunchTaskKey === key && (
+                              <form
+                                onSubmit={(event) => handleAddPunchItem(event, trade.id, task.id)}
+                                className="mt-3 space-y-3 rounded-md border border-slate-800 bg-slate-900 p-3"
+                              >
+                                <div>
+                                  <label className="mb-1 block text-xs text-slate-400">Punch item</label>
+                                  <textarea
+                                    required
+                                    rows={2}
+                                    value={newPunch.title}
+                                    onChange={(event) =>
+                                      setNewPunch((current) => ({ ...current, title: event.target.value }))
+                                    }
+                                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                                  />
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                                  <SelectField
+                                    label="Priority"
+                                    value={newPunch.priority}
+                                    onChange={(value) =>
+                                      setNewPunch((current) => ({ ...current, priority: value as PunchPriority }))
+                                    }
+                                    options={[
+                                      { value: "low", label: "Low" },
+                                      { value: "medium", label: "Medium" },
+                                      { value: "high", label: "High" },
+                                    ]}
+                                  />
+                                  <SelectField
+                                    label="Status"
+                                    value={newPunch.status}
+                                    onChange={(value) =>
+                                      setNewPunch((current) => ({ ...current, status: value as PunchStatus }))
+                                    }
+                                    options={[
+                                      { value: "open", label: "Open" },
+                                      { value: "in_progress", label: "In Progress" },
+                                      { value: "resolved", label: "Resolved" },
+                                    ]}
+                                  />
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">Due date</label>
+                                    <input
+                                      type="date"
+                                      value={newPunch.dueDate}
+                                      onChange={(event) =>
+                                        setNewPunch((current) => ({ ...current, dueDate: event.target.value }))
+                                      }
+                                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">Assignee</label>
+                                    <input
+                                      type="text"
+                                      value={newPunch.assignee}
+                                      onChange={(event) =>
+                                        setNewPunch((current) => ({ ...current, assignee: event.target.value }))
+                                      }
+                                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setAddingPunchTaskKey(null)}
+                                    className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400"
+                                  >
+                                    Save Punch Item
+                                  </button>
+                                </div>
+                              </form>
+                            )}
+
+                            {task.punchItems.length > 0 && (
+                              <div className="mt-3 space-y-2">
+                                {task.punchItems.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2"
+                                  >
+                                    <div className="flex flex-wrap items-start justify-between gap-2">
+                                      <div>
+                                        <p className="text-sm text-slate-200">{item.title}</p>
+                                        <p className="text-xs text-slate-500">
+                                          Created {formatDateTime(item.createdAt)}
+                                          {item.assignee ? ` · ${item.assignee}` : ""}
+                                        </p>
+                                        {item.dueDate && (
+                                          <p
+                                            className={`text-xs ${
+                                              isOverdue(item) ? "text-rose-300" : "text-slate-400"
+                                            }`}
+                                          >
+                                            Due {formatDate(item.dueDate)}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span
+                                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityColors[item.priority]}`}
+                                        >
+                                          {formatLabel(item.priority)}
+                                        </span>
+                                        <button
+                                          onClick={() => cyclePunchStatus(trade.id, task.id, item.id)}
+                                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${punchStatusColors[item.status]}`}
+                                        >
+                                          {formatLabel(item.status)}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
-                </div>
+                </article>
               ))}
             </div>
           )}
-        </div>
+        </section>
       </main>
+    </div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <p className="text-sm text-slate-400">{label}</p>
+      <p className={`mt-2 text-3xl font-semibold ${valueClass ?? "text-slate-100"}`}>{value}</p>
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs text-slate-400">{label}</label>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function GanttChart({ project }: { project: Project }) {
+  const rows = project.trades.flatMap((trade) =>
+    trade.tasks.map((task) => ({
+      id: task.id,
+      tradeName: trade.name,
+      title: task.title,
+      startDate: task.startDate,
+      endDate: task.endDate,
+      mode: task.mode,
+      status: task.status,
+    }))
+  );
+
+  if (rows.length === 0) {
+    return <p className="text-sm text-slate-400">Add tasks to generate the timeline.</p>;
+  }
+
+  const toDate = (value: string) => new Date(`${value}T00:00:00`);
+  const allStarts = rows.map((row) => toDate(row.startDate));
+  const allEnds = rows.map((row) => toDate(row.endDate));
+  const minDate = new Date(Math.min(...allStarts.map((date) => date.getTime())));
+  const maxDate = new Date(Math.max(...allEnds.map((date) => date.getTime())));
+
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const totalDays = Math.max(1, Math.ceil((maxDate.getTime() - minDate.getTime()) / msPerDay) + 1);
+  const dayWidth = 20;
+  const timelineWidth = Math.max(540, totalDays * dayWidth);
+
+  const dayLabels = Array.from({ length: totalDays }, (_, index) => {
+    const date = new Date(minDate.getTime() + index * msPerDay);
+    return {
+      index,
+      short: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      show: index % 7 === 0 || index === 0 || index === totalDays - 1,
+    };
+  });
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="min-w-full" style={{ width: `${timelineWidth + 220}px` }}>
+        <div className="mb-2 flex border-b border-slate-800 pb-2">
+          <div className="w-[220px] shrink-0 text-xs uppercase tracking-wide text-slate-500">Task</div>
+          <div className="relative" style={{ width: `${timelineWidth}px` }}>
+            {dayLabels.map((label) => (
+              <div
+                key={label.index}
+                className="absolute top-0 text-[10px] text-slate-500"
+                style={{ left: `${label.index * dayWidth}px` }}
+              >
+                {label.show ? label.short : ""}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {rows.map((row) => {
+            const startOffset = Math.floor((toDate(row.startDate).getTime() - minDate.getTime()) / msPerDay);
+            const duration =
+              Math.max(1, Math.floor((toDate(row.endDate).getTime() - toDate(row.startDate).getTime()) / msPerDay) + 1) *
+              dayWidth;
+
+            return (
+              <div key={row.id} className="flex items-center">
+                <div className="w-[220px] shrink-0 pr-3">
+                  <p className="truncate text-sm text-slate-200">{row.title}</p>
+                  <p className="text-xs text-slate-500">
+                    {row.tradeName} · {formatLabel(row.mode)}
+                  </p>
+                </div>
+                <div className="relative h-8 rounded-md bg-slate-900/70" style={{ width: `${timelineWidth}px` }}>
+                  <div
+                    className="absolute top-1.5 h-5 rounded-md px-2 text-[11px] leading-5 text-slate-950"
+                    style={{
+                      left: `${startOffset * dayWidth}px`,
+                      width: `${duration}px`,
+                      background:
+                        row.mode === "sequential"
+                          ? "linear-gradient(90deg,#38bdf8,#06b6d4)"
+                          : "linear-gradient(90deg,#f59e0b,#f97316)",
+                      opacity: row.status === "completed" ? 0.6 : 1,
+                    }}
+                    title={`${row.startDate} to ${row.endDate}`}
+                  >
+                    {formatLabel(row.status)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
