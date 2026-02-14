@@ -827,9 +827,9 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-full" style={{ width: `${timelineWidth + 220}px` }}>
+      <div className="min-w-full" style={{ width: `${timelineWidth + 280}px` }}>
         <div className="mb-2 flex border-b border-slate-800 pb-2">
-          <div className="w-[220px] shrink-0 text-xs uppercase tracking-wide text-slate-500">Task</div>
+          <div className="w-[280px] shrink-0 text-xs uppercase tracking-wide text-slate-500">Task</div>
           <div className="relative" style={{ width: `${timelineWidth}px` }}>
             {dayLabels.map((label) => (
               <div
@@ -851,17 +851,22 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
               dayWidth;
 
             return (
-              <div 
-                key={row.id} 
-                className={`flex items-center group ${row.chatMessages.length > 0 ? 'cursor-pointer hover:bg-slate-800/50 rounded' : ''}`}
+              <div
+                key={`${row.tradeName}-${row.id}`}
+                className={`flex items-center group ${row.chatMessages.length > 0 ? "cursor-pointer hover:bg-slate-800/50 rounded" : ""}`}
                 onClick={() => row.chatMessages.length > 0 && onViewChat(row.tradeName, row.title, row.chatMessages)}
               >
-                <div className="w-[220px] shrink-0 pr-3">
-                  <div className="flex items-center gap-2">
-                    <p className={`truncate text-sm text-slate-200 ${row.chatMessages.length > 0 ? 'text-cyan-300' : ''}`}>{row.title}</p>
+                <div className="w-[280px] shrink-0 pr-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={`min-w-0 truncate text-sm text-slate-200 ${row.chatMessages.length > 0 ? "text-cyan-300" : ""}`}>{row.title}</p>
                     {row.chatMessages.length > 0 && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.title, row.chatMessages); }}
+                      <button
+                        type="button"
+                        aria-label={`Open chat for ${row.title}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewChat(row.tradeName, row.title, row.chatMessages);
+                        }}
                         className="text-xs bg-cyan-500 text-slate-900 px-2 py-0.5 rounded font-medium hover:bg-cyan-400"
                       >
                         Chat
