@@ -846,21 +846,23 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
     return {
       index,
       short: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      show: index % 7 === 0 || index === 0 || index === totalDays - 1,
+      show: index % 5 === 0 || index === 0 || index === totalDays - 1,
     };
   });
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-full" style={{ width: `${timelineWidth + 280}px` }}>
-        <div className="mb-2 flex border-b border-slate-800 pb-2">
-          <div className="w-[280px] shrink-0 text-xs uppercase tracking-wide text-slate-500">Task</div>
+      <div className="min-w-full" style={{ width: `${timelineWidth + 200}px` }}>
+        <div className="mb-2 flex border-b border-slate-700 pb-2">
+          <div className="shrink-0 sticky left-0 z-10 bg-slate-950 pr-3 border-r border-slate-700" style={{ width: "200px" }}>
+            <span className="text-xs uppercase tracking-wide text-slate-400">Task</span>
+          </div>
           <div className="relative" style={{ width: `${timelineWidth}px` }}>
             {dayLabels.map((label) => (
               <div
                 key={label.index}
-                className="absolute top-0 text-[10px] text-slate-500"
-                style={{ left: `${label.index * dayWidth}px` }}
+                className="absolute top-0 text-[10px] font-medium text-slate-300 border-l border-slate-700 pl-1"
+                style={{ left: `${label.index * dayWidth}px`, height: "20px" }}
               >
                 {label.show ? label.short : ""}
               </div>
@@ -882,7 +884,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                 className={`flex items-center group ${hasChat ? "cursor-pointer hover:bg-slate-800/50 rounded" : ""}`}
                 onClick={() => hasChat && onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || [])}
               >
-                <div className="w-[280px] shrink-0 pr-3">
+                <div className="shrink-0 sticky left-0 z-10 bg-slate-950 border-r border-slate-800 pr-3" style={{ width: "200px" }}>
                   <div className="flex items-center justify-between gap-2">
                     <p className={`min-w-0 truncate text-sm text-slate-200 ${hasChat ? "text-cyan-300" : ""}`}>{row.title}</p>
                     {row.chatMessages && row.chatMessages.length > 0 && (
@@ -893,19 +895,27 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                           e.stopPropagation();
                           onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || []);
                         }}
-                        className="text-xs bg-cyan-500 text-slate-900 px-3 py-1.5 rounded font-bold hover:bg-cyan-400"
+                        className="text-xs bg-cyan-500 text-slate-900 px-2 py-1 rounded font-bold hover:bg-cyan-400"
                       >
                         Chat
                       </button>
                     )}
                   </div>
                   <p className="text-xs text-slate-500">
-                    {row.tradeName} · {formatLabel(row.mode)}
+                    {row.tradeName}
                   </p>
                 </div>
-                <div className="relative h-8 rounded-md bg-slate-900/70" style={{ width: `${timelineWidth}px` }}>
+                <div className="relative h-8" style={{ width: `${timelineWidth}px` }}>
+                  {/* Vertical grid lines */}
+                  {dayLabels.map((label) => (
+                    <div
+                      key={label.index}
+                      className="absolute top-0 bottom-0 border-l border-slate-800"
+                      style={{ left: `${label.index * dayWidth}px` }}
+                    />
+                  ))}
                   <div
-                    className="absolute top-1.5 h-5 rounded-md px-2 text-[11px] leading-5 text-slate-950 cursor-pointer transition hover:scale-105 hover:shadow-lg"
+                    className="absolute top-1 h-6 rounded-md px-2 text-[11px] leading-6 text-slate-950 font-medium cursor-pointer transition hover:scale-105 hover:shadow-lg"
                     style={{
                       left: `${startOffset * dayWidth}px`,
                       width: `${duration}px`,
