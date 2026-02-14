@@ -882,7 +882,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
             return (
               <div
                 key={`${row.tradeName}-${row.id}`}
-                className={`flex items-center group ${hasChat ? "cursor-pointer hover:bg-slate-800/50 rounded" : ""}`}
+                className={`flex items-center bg-slate-950 border-b border-slate-800 ${hasChat ? "cursor-pointer hover:bg-slate-900" : ""}`}
                 onClick={() => hasChat && onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || [])}
               >
                 <div className="shrink-0 sticky left-0 z-20 bg-slate-950 border-r border-slate-800 pr-2 md:pr-3 w-32 md:w-[200px]">
