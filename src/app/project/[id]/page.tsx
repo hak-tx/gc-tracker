@@ -304,7 +304,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="flex gap-3 overflow-x-auto pb-2">
           <SummaryCard label="Trades" value={project.trades.length.toString()} />
           <SummaryCard label="Tasks" value={totalTasks.toString()} valueClass="text-cyan-300" />
           <SummaryCard
@@ -319,7 +319,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           />
         </div>
 
-        <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <section className="rounded-xl border border-slate-800 bg-slate-900 p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Task Gantt</h2>
             <p className="text-xs text-slate-500 md:hidden">← Swipe to see timeline →</p>
@@ -328,7 +328,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           <GanttChart project={project} onViewChat={(tradeName, subName, taskTitle, messages) => setSelectedChatTask({ tradeName, subName, taskTitle, messages })} />
         </section>
 
-        <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
+        <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
           <header className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
             <h2 className="text-lg font-semibold">Trades</h2>
             <button
@@ -774,7 +774,7 @@ function SummaryCard({
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 min-w-[120px]">
       <p className="text-sm text-slate-400">{label}</p>
       <p className={`mt-2 text-3xl font-semibold ${valueClass ?? "text-slate-100"}`}>{value}</p>
     </div>
