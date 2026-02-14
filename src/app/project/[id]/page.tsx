@@ -857,9 +857,19 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                 onClick={() => row.chatMessages.length > 0 && onViewChat(row.tradeName, row.title, row.chatMessages)}
               >
                 <div className="w-[220px] shrink-0 pr-3">
-                  <p className={`truncate text-sm text-slate-200 ${row.chatMessages.length > 0 ? 'text-cyan-300' : ''}`}>{row.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className={`truncate text-sm text-slate-200 ${row.chatMessages.length > 0 ? 'text-cyan-300' : ''}`}>{row.title}</p>
+                    {row.chatMessages.length > 0 && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.title, row.chatMessages); }}
+                        className="text-xs bg-cyan-500 text-slate-900 px-2 py-0.5 rounded font-medium hover:bg-cyan-400"
+                      >
+                        Chat
+                      </button>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">
-                    {row.tradeName} · {formatLabel(row.mode)} {row.chatMessages.length > 0 && <span className="text-cyan-400">· 💬</span>}
+                    {row.tradeName} · {formatLabel(row.mode)}
                   </p>
                 </div>
                 <div className="relative h-8 rounded-md bg-slate-900/70" style={{ width: `${timelineWidth}px` }}>
