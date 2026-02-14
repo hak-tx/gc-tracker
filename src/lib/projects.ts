@@ -42,6 +42,7 @@ export interface Project {
 }
 
 export const STORAGE_KEY = "gc-tracker-projects";
+const STORAGE_VERSION = "v2";
 
 export const statusColors: Record<ProjectStatus, string> = {
   active: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
@@ -580,6 +581,13 @@ export const isOverdue = (item: PunchItem) => {
 
 export const loadProjects = (): Project[] => {
   if (typeof window === "undefined") {
+    return defaultProjects;
+  }
+
+  const version = window.localStorage.getItem("gc-tracker-version");
+  if (version !== STORAGE_VERSION) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultProjects));
+    window.localStorage.setItem("gc-tracker-version", STORAGE_VERSION);
     return defaultProjects;
   }
 
