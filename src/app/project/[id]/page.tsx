@@ -922,9 +922,9 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                       background:
                         row.status === "completed"
                           ? "linear-gradient(90deg,#34d399,#10b981)"
-                          : row.mode === "sequential"
-                            ? "linear-gradient(90deg,#38bdf8,#06b6d4)"
-                            : "linear-gradient(90deg,#f59e0b,#f97316)",
+                          : row.status === "in_progress"
+                            ? "linear-gradient(90deg,#f59e0b,#d97706)"
+                            : "linear-gradient(90deg,#3b82f6,#2563eb)",
                     }}
                     title={`${row.title}\n${row.startDate} → ${row.endDate}\n${row.status}\n${row.mode}\n${row.tradeName}${row.lastMessage ? '\n\nLast: ' + row.lastMessage : ''}`}
                   >

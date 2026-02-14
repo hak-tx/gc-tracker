@@ -53,7 +53,7 @@ export interface Project {
 }
 
 export const STORAGE_KEY = "gc-tracker-projects";
-const STORAGE_VERSION = "v11";
+const STORAGE_VERSION = "v14";
 
 export const statusColors: Record<ProjectStatus, string> = {
   active: "bg-emerald-700 text-emerald-100 ring-1 ring-emerald-500",
@@ -101,6 +101,16 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-01",
             endDate: "2026-02-10",
             dependencyTaskIds: [],
+            lastMessage: "All done. Passed inspection. Panel is 200amp as requested.",
+            lastMessageFrom: "Mike T. (Sparkline Electric)",
+            lastMessageAt: "2026-02-10T14:00:00",
+            chatMessages: [
+              { id: "e1", from: "agent", text: "Mike, main panel upgrade scheduled for Feb 1. Any concerns?", timestamp: "2026-02-01T07:00:00" },
+              { id: "e2", from: "sub", text: "Just need access to the meter. City said they'd be here at 8am.", timestamp: "2026-02-01T07:30:00" },
+              { id: "e3", from: "agent", text: "Perfect. I'll make sure the area is clear. How long do you think?", timestamp: "2026-02-01T07:31:00" },
+              { id: "e4", from: "sub", text: "Panel swap probably 4 hours. Then inspection same day if we're lucky.", timestamp: "2026-02-01T08:00:00" },
+              { id: "e5", from: "agent", text: "Great! Panel is in. City passed inspection. 200amp service confirmed.", timestamp: "2026-02-10T14:00:00" },
+            ],
             punchItems: [
               {
                 id: "p-1",
@@ -121,6 +131,16 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-05",
             endDate: "2026-02-15",
             dependencyTaskIds: [],
+            lastMessage: "Rough in complete. All boxes mounted and wires pulled. Ready for inspection.",
+            lastMessageFrom: "Mike T. (Sparkline Electric)",
+            lastMessageAt: "2026-02-15T16:30:00",
+            chatMessages: [
+              { id: "e6", from: "agent", text: "Mike, rough-in wiring starts Monday. Need anything from the GC?", timestamp: "2026-02-05T07:00:00" },
+              { id: "e7", from: "sub", text: "Floor plans with outlet locations would help but I can work from the spec.", timestamp: "2026-02-05T08:00:00" },
+              { id: "e8", from: "agent", text: "I'll have those sent over. Any material concerns?", timestamp: "2026-02-05T08:05:00" },
+              { id: "e9", from: "sub", text: "Got all the Romex and boxes. Should be good.", timestamp: "2026-02-05T09:00:00" },
+              { id: "e10", from: "sub", text: "Rough in complete. All boxes mounted and wires pulled. Ready for inspection.", timestamp: "2026-02-15T16:30:00" },
+            ],
             punchItems: [],
           },
           {
@@ -169,6 +189,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-26",
             endDate: "2026-03-05",
             dependencyTaskIds: ["t-3"],
+            lastMessage: "I'll bring extra dimmers. Should be 3 days max once we start.",
+            lastMessageFrom: "Mike T. (Sparkline Electric)",
+            lastMessageAt: "2026-02-20T10:00:00",
+            chatMessages: [
+              { id: "e11", from: "agent", text: "Mike, final trim and testing is scheduled to start Feb 26. We'll need all fixtures, switches, and dimmers.", timestamp: "2026-02-20T07:00:00" },
+              { id: "e12", from: "sub", text: "Got the list. Just confirming - are we doing smart switches in the conference room?", timestamp: "2026-02-20T08:30:00" },
+              { id: "e13", from: "agent", text: "Yes, the owner wants Lutron Caseta in the main office and conference room. Regular switches elsewhere.", timestamp: "2026-02-20T08:45:00" },
+              { id: "e14", from: "sub", text: "I'll bring extra dimmers. Should be 3 days max once we start.", timestamp: "2026-02-20T10:00:00" },
+            ],
             punchItems: [],
           },
         ],
@@ -185,6 +214,16 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-01",
             endDate: "2026-02-08",
             dependencyTaskIds: [],
+            lastMessage: "Water main is live. All connections sealed and pressure tested. Ready for inspection.",
+            lastMessageFrom: "Carlos (Allied Plumbing)",
+            lastMessageAt: "2026-02-08T15:00:00",
+            chatMessages: [
+              { id: "p1", from: "agent", text: "Carlos, water main reroute starts Feb 1. Need the building shut down for about 4 hours. Will you coordinate with the building manager?", timestamp: "2026-01-31T14:00:00" },
+              { id: "p2", from: "sub", text: "Already talked to them. They're giving us the 6am-10am window Tuesday.", timestamp: "2026-01-31T15:00:00" },
+              { id: "p3", from: "agent", text: "Perfect. Any permits needed?", timestamp: "2026-01-31T15:05:00" },
+              { id: "p4", from: "sub", text: "City already approved the permit. Picking it up Monday.", timestamp: "2026-01-31T16:00:00" },
+              { id: "p5", from: "agent", text: "Water main is live. All connections sealed and pressure tested. Ready for inspection.", timestamp: "2026-02-08T15:00:00" },
+            ],
             punchItems: [],
           },
           {
@@ -268,6 +307,16 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-03",
             endDate: "2026-02-12",
             dependencyTaskIds: [],
+            lastMessage: "All ductwork installed and sealed. Ready for the HVAC unit install next week.",
+            lastMessageFrom: "Tom (Cool Air HVAC)",
+            lastMessageAt: "2026-02-12T14:00:00",
+            chatMessages: [
+              { id: "h1", from: "agent", text: "Tom, HVAC rough-in scheduled to start Feb 3. Can you bring extra flex duct?", timestamp: "2026-02-02T10:00:00" },
+              { id: "h2", from: "sub", text: "Already loading the truck. Will have everything we need.", timestamp: "2026-02-02T11:00:00" },
+              { id: "h3", from: "agent", text: "Great. Any access issues with the ceiling?", timestamp: "2026-02-03T07:00:00" },
+              { id: "h4", from: "sub", text: "A few tight spots but nothing we can't handle. Might need one more helper.", timestamp: "2026-02-03T08:00:00" },
+              { id: "h5", from: "sub", text: "All ductwork installed and sealed. Ready for the HVAC unit install next week.", timestamp: "2026-02-12T14:00:00" },
+            ],
             punchItems: [],
           },
           {
@@ -278,6 +327,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-13",
             endDate: "2026-02-20",
             dependencyTaskIds: ["t-8"],
+            lastMessage: "Half the VAV boxes installed. Should finish by Thursday if materials show up.",
+            lastMessageFrom: "Tom (Cool Air HVAC)",
+            lastMessageAt: "2026-02-17T11:00:00",
+            chatMessages: [
+              { id: "h6", from: "agent", text: "Tom, VAV box install can start today. The units arrived yesterday.", timestamp: "2026-02-13T07:00:00" },
+              { id: "h7", from: "sub", text: "Perfect. I'll bring my installer. How many units?", timestamp: "2026-02-13T07:30:00" },
+              { id: "h8", from: "agent", text: "8 VAV boxes total. Floor plans show locations in the specs.", timestamp: "2026-02-13T07:45:00" },
+              { id: "h9", from: "sub", text: "Half the VAV boxes installed. Should finish by Thursday if materials show up.", timestamp: "2026-02-17T11:00:00" },
+            ],
             punchItems: [],
           },
           {
@@ -288,6 +346,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-21",
             endDate: "2026-02-25",
             dependencyTaskIds: ["t-9"],
+            lastMessage: "I'll need the WiFi credentials and thermostat locations before we start programming.",
+            lastMessageFrom: "Tom (Cool Air HVAC)",
+            lastMessageAt: "2026-02-18T09:00:00",
+            chatMessages: [
+              { id: "h10", from: "agent", text: "Tom, thermostat programming is scheduled for Feb 21. Do you have the controls?", timestamp: "2026-02-18T07:00:00" },
+              { id: "h11", from: "sub", text: "The Nest Pros are in my truck. Just need the WiFi credentials.", timestamp: "2026-02-18T08:00:00" },
+              { id: "h12", from: "agent", text: "I'll get those from the owner. Any other prerequisites?", timestamp: "2026-02-18T08:30:00" },
+              { id: "h13", from: "sub", text: "I'll need the WiFi credentials and thermostat locations before we start programming.", timestamp: "2026-02-18T09:00:00" },
+            ],
             punchItems: [
               {
                 id: "p-7",
@@ -314,6 +381,16 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-10",
             endDate: "2026-02-24",
             dependencyTaskIds: [],
+            lastMessage: "Floor 1 is 80% done. Moving to floor 2 Monday. Crew of 4 on site.",
+            lastMessageFrom: "Ricky (Austin Drywall)",
+            lastMessageAt: "2026-02-17T15:00:00",
+            chatMessages: [
+              { id: "d1", from: "agent", text: "Ricky, drywall crew can start Feb 10. We need 5/8\" type X on the ceiling and 1/2\" on walls.", timestamp: "2026-02-08T10:00:00" },
+              { id: "d2", from: "sub", text: "Got it. I'll bring 200 sheets of 5/8\" and 150 of 1/2\".", timestamp: "2026-02-08T11:00:00" },
+              { id: "d3", from: "agent", text: "Any special instructions for the fire-rated walls?", timestamp: "2026-02-08T11:30:00" },
+              { id: "d4", from: "sub", text: "Just the mechanical room needs type X. Rest is standard.", timestamp: "2026-02-08T12:00:00" },
+              { id: "d5", from: "sub", text: "Floor 1 is 80% done. Moving to floor 2 Monday. Crew of 4 on site.", timestamp: "2026-02-17T15:00:00" },
+            ],
             punchItems: [
               {
                 id: "p-8",
@@ -334,6 +411,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-20",
             endDate: "2026-03-03",
             dependencyTaskIds: ["t-11"],
+            lastMessage: "We can start taping once the second coat is done on floor 2. Probably Feb 22.",
+            lastMessageFrom: "Ricky (Austin Drywall)",
+            lastMessageAt: "2026-02-18T10:00:00",
+            chatMessages: [
+              { id: "d6", from: "agent", text: "Ricky, tape and mud starts right after drywall is done. Any delay expected?", timestamp: "2026-02-18T07:00:00" },
+              { id: "d7", from: "sub", text: "We're running about a day ahead. Should be done hanging by Feb 19.", timestamp: "2026-02-18T08:00:00" },
+              { id: "d8", from: "agent", text: "Great. Do you need the mud and tape delivered?", timestamp: "2026-02-18T08:30:00" },
+              { id: "d9", from: "sub", text: "We can start taping once the second coat is done on floor 2. Probably Feb 22.", timestamp: "2026-02-18T10:00:00" },
+            ],
             punchItems: [],
           },
           {
@@ -344,6 +430,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-03-01",
             endDate: "2026-03-10",
             dependencyTaskIds: ["t-12"],
+            lastMessage: "I'll need the dust collection system set up before we start sanding.",
+            lastMessageFrom: "Ricky (Austin Drywall)",
+            lastMessageAt: "2026-02-25T09:00:00",
+            chatMessages: [
+              { id: "d10", from: "agent", text: "Ricky, sand and finish is scheduled for March 1. Do you have a vacuum system?", timestamp: "2026-02-25T07:00:00" },
+              { id: "d11", from: "sub", text: "Got my Festool system. Works great for dust control.", timestamp: "2026-02-25T08:00:00" },
+              { id: "d12", from: "agent", text: "Perfect. The owner is sensitive to dust. Will need plastic on all vents.", timestamp: "2026-02-25T08:30:00" },
+              { id: "d13", from: "sub", text: "I'll need the dust collection system set up before we start sanding.", timestamp: "2026-02-25T09:00:00" },
+            ],
             punchItems: [],
           },
         ],
@@ -360,6 +455,16 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-05",
             endDate: "2026-02-08",
             dependencyTaskIds: [],
+            lastMessage: "Subfloor is level and ready. All squeaks addressed. Ready for LVP.",
+            lastMessageFrom: "Marcus (TX Flooring)",
+            lastMessageAt: "2026-02-08T12:00:00",
+            chatMessages: [
+              { id: "f1", from: "agent", text: "Marcus, subfloor prep starts Feb 5. Need to check for squeaks and levelness.", timestamp: "2026-02-04T10:00:00" },
+              { id: "f2", from: "sub", text: "I'll bring my squeak kit and a level. Any areas of concern?", timestamp: "2026-02-04T11:00:00" },
+              { id: "f3", from: "agent", text: "The conference room has a couple soft spots. Might need Sister joists.", timestamp: "2026-02-04T11:30:00" },
+              { id: "f4", from: "sub", text: "Checked it out. Just needs blocking. Easy fix.", timestamp: "2026-02-05T08:00:00" },
+              { id: "f5", from: "sub", text: "Subfloor is level and ready. All squeaks addressed. Ready for LVP.", timestamp: "2026-02-08T12:00:00" },
+            ],
             punchItems: [],
           },
           {
@@ -370,6 +475,16 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-09",
             endDate: "2026-02-18",
             dependencyTaskIds: ["t-14"],
+            lastMessage: "Break room is done. Moving to the main office tomorrow. About 60% complete.",
+            lastMessageFrom: "Marcus (TX Flooring)",
+            lastMessageAt: "2026-02-16T14:00:00",
+            chatMessages: [
+              { id: "f6", from: "agent", text: "Marcus, LVP install can start Monday Feb 9. Acclimate the material for 48 hours.", timestamp: "2026-02-07T09:00:00" },
+              { id: "f7", from: "sub", text: "Material is in the building. Starting the acclimation process now.", timestamp: "2026-02-07T10:00:00" },
+              { id: "f8", from: "agent", text: "Great. Any concerns about the pattern layout?", timestamp: "2026-02-09T07:00:00" },
+              { id: "f9", from: "sub", text: "I'll do a brick pattern. Looks better and uses less waste.", timestamp: "2026-02-09T07:30:00" },
+              { id: "f10", from: "sub", text: "Break room is done. Moving to the main office tomorrow. About 60% complete.", timestamp: "2026-02-16T14:00:00" },
+            ],
             punchItems: [
               {
                 id: "p-9",
@@ -399,6 +514,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-02-19",
             endDate: "2026-02-28",
             dependencyTaskIds: ["t-15"],
+            lastMessage: "We'll need the elevator access confirmed for Feb 19. Can't carry all the material up stairs.",
+            lastMessageFrom: "Marcus (TX Flooring)",
+            lastMessageAt: "2026-02-17T10:00:00",
+            chatMessages: [
+              { id: "f11", from: "agent", text: "Marcus, floor 2 LVP starts right after floor 1 is done. Any special needs?", timestamp: "2026-02-17T07:00:00" },
+              { id: "f12", from: "sub", text: "Same as floor 1. Just need confirmation on the elevator.", timestamp: "2026-02-17T08:00:00" },
+              { id: "f13", from: "agent", text: "Building manager confirmed elevator access from 7am-5pm daily.", timestamp: "2026-02-17T09:00:00" },
+              { id: "f14", from: "sub", text: "We'll need the elevator access confirmed for Feb 19. Can't carry all the material up stairs.", timestamp: "2026-02-17T10:00:00" },
+            ],
             punchItems: [],
           },
         ],
@@ -415,6 +539,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-03-05",
             endDate: "2026-03-10",
             dependencyTaskIds: ["t-13"],
+            lastMessage: "I'll need the paint specifications. Primer or primer-sealer?",
+            lastMessageFrom: "Steve (Austin Pro Paint)",
+            lastMessageAt: "2026-03-01T08:00:00",
+            chatMessages: [
+              { id: "pn1", from: "agent", text: "Steve, prime walls scheduled for March 5. The drywall should be ready by then.", timestamp: "2026-03-01T07:00:00" },
+              { id: "pn2", from: "sub", text: "I'll bring my crew of 3. Will we have access to water for cleanup?", timestamp: "2026-03-01T07:30:00" },
+              { id: "pn3", from: "agent", text: "Yes, there's a utility sink in the basement. Will mark it on the floor plan.", timestamp: "2026-03-01T08:00:00" },
+              { id: "pn4", from: "sub", text: "I'll need the paint specifications. Primer or primer-sealer?", timestamp: "2026-03-01T09:00:00" },
+            ],
             punchItems: [],
           },
           {
@@ -425,6 +558,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-03-11",
             endDate: "2026-03-18",
             dependencyTaskIds: ["t-17"],
+            lastMessage: "What color is the \"neutral\"? I have Sherwin Williams ready but need the code.",
+            lastMessageFrom: "Steve (Austin Pro Paint)",
+            lastMessageAt: "2026-03-08T09:00:00",
+            chatMessages: [
+              { id: "pn5", from: "agent", text: "Steve, finish coat starts March 11. Owner picked a neutral white.", timestamp: "2026-03-08T07:00:00" },
+              { id: "pn6", from: "sub", text: "Great. Eggshell or satin?", timestamp: "2026-03-08T07:30:00" },
+              { id: "pn7", from: "agent", text: "Eggshell in offices, satin in hallways and restrooms.", timestamp: "2026-03-08T08:00:00" },
+              { id: "pn8", from: "sub", text: "What color is the \"neutral\"? I have Sherwin Williams ready but need the code.", timestamp: "2026-03-08T09:00:00" },
+            ],
             punchItems: [],
           },
           {
@@ -435,6 +577,15 @@ export const defaultProjects: Project[] = [
             startDate: "2026-03-19",
             endDate: "2026-03-25",
             dependencyTaskIds: ["t-18"],
+            lastMessage: "Got the brand colors from the owner. Navy blue and forest green. Need sample chips first.",
+            lastMessageFrom: "Steve (Austin Pro Paint)",
+            lastMessageAt: "2026-03-12T10:00:00",
+            chatMessages: [
+              { id: "pn9", from: "agent", text: "Steve, accent walls start March 19. Owner wants their company colors.", timestamp: "2026-03-12T07:00:00" },
+              { id: "pn10", from: "sub", text: "Great. Can you get me the color codes?", timestamp: "2026-03-12T08:00:00" },
+              { id: "pn11", from: "agent", text: "I'll have them by end of week. The owner is sending the brand guidelines.", timestamp: "2026-03-12T09:00:00" },
+              { id: "pn12", from: "sub", text: "Got the brand colors from the owner. Navy blue and forest green. Need sample chips first.", timestamp: "2026-03-12T10:00:00" },
+            ],
             punchItems: [],
           },
         ],
