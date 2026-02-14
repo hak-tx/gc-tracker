@@ -322,6 +322,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Task Gantt</h2>
+            <p className="text-xs text-slate-500 md:hidden">← Swipe to see timeline →</p>
             <span className="text-xs text-slate-500">Timeline by task start/end dates</span>
           </div>
           <GanttChart project={project} onViewChat={(tradeName, subName, taskTitle, messages) => setSelectedChatTask({ tradeName, subName, taskTitle, messages })} />
@@ -731,24 +732,24 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
       {/* Chat Modal */}
       {selectedChatTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setSelectedChatTask(null)}>
-          <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 md:p-4" onClick={() => setSelectedChatTask(null)}>
+          <div className="h-full w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 md:h-auto md:max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
               <div>
-                <h3 className="font-semibold text-white">{selectedChatTask.tradeName} — {selectedChatTask.subName}</h3>
+                <h3 className="font-semibold text-white text-base md:text-lg">{selectedChatTask.tradeName} — {selectedChatTask.subName}</h3>
                 <p className="text-xs text-slate-400">{selectedChatTask.taskTitle}</p>
               </div>
-              <button onClick={() => setSelectedChatTask(null)} className="text-slate-400 hover:text-white text-xl">✕</button>
+              <button onClick={() => setSelectedChatTask(null)} className="text-slate-400 hover:text-white text-2xl p-2">✕</button>
             </div>
-            <div className="flex h-96 flex-col overflow-y-auto p-4 space-y-4">
+            <div className="flex h-[calc(100%-60px)] flex-col overflow-y-auto p-4 space-y-4 md:h-96">
               {selectedChatTask.messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.from === "agent" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                     msg.from === "agent" 
                       ? "bg-cyan-500 text-slate-900" 
                       : "bg-slate-800 text-slate-100"
                   }`}>
-                    <p className="text-sm">{msg.text}</p>
+                    <p className="text-sm md:text-base">{msg.text}</p>
                     <p className={`mt-1 text-[10px] ${msg.from === "agent" ? "text-slate-600" : "text-slate-500"}`}>
                       {new Date(msg.timestamp).toLocaleString()}
                     </p>
@@ -851,10 +852,10 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
   });
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto [-webkit-overflow-scrolling:touch] scroll-smooth">
       <div className="min-w-full" style={{ width: `${timelineWidth + 200}px` }}>
         <div className="mb-2 flex border-b border-slate-700 pb-2">
-          <div className="shrink-0 sticky left-0 z-10 bg-slate-950 pr-3 border-r border-slate-700" style={{ width: "200px" }}>
+          <div className="shrink-0 sticky left-0 z-10 bg-slate-950 pr-3 border-r border-slate-700 backdrop-blur-sm" style={{ width: "200px" }}>
             <span className="text-xs uppercase tracking-wide text-slate-400">Task</span>
           </div>
           <div className="relative" style={{ width: `${timelineWidth}px` }}>
@@ -884,7 +885,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                 className={`flex items-center group ${hasChat ? "cursor-pointer hover:bg-slate-800/50 rounded" : ""}`}
                 onClick={() => hasChat && onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || [])}
               >
-                <div className="shrink-0 sticky left-0 z-10 bg-slate-950 border-r border-slate-800 pr-3" style={{ width: "200px" }}>
+                <div className="shrink-0 sticky left-0 z-10 bg-slate-950 border-r border-slate-800 pr-3 backdrop-blur-sm" style={{ width: "200px" }}>
                   <div className="flex items-center justify-between gap-2">
                     <p className={`min-w-0 truncate text-sm text-slate-200 ${hasChat ? "text-cyan-300" : ""}`}>{row.title}</p>
                     {row.chatMessages && row.chatMessages.length > 0 && (
