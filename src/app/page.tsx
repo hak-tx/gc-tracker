@@ -17,9 +17,9 @@ export default function Home() {
       <section className="mx-auto max-w-5xl px-6 pb-24 pt-16 text-center">
         {/* Logo */}
         <img
-          src="/factorgc-wordmark.jpg"
+          src="/factorgc-logo.png"
           alt="FactorGC"
-          className="mx-auto max-w-md"
+          className="mx-auto w-80 md:w-96"
         />
         <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
           Automated Construction Management System
