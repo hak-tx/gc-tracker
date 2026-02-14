@@ -925,14 +925,14 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                           : "linear-gradient(90deg,#f59e0b,#f97316)",
                       opacity: row.status === "completed" ? 0.6 : 1,
                     }}
-                    title={row.lastMessage ? `"${row.lastMessage}"\n\n— ${row.lastMessageFrom}\n${row.lastMessageAt ? new Date(row.lastMessageAt).toLocaleString() : ''}` : `${row.startDate} to ${row.endDate}`}
+                    title={`${row.title}\n${row.startDate} → ${row.endDate}\n${row.status}\n${row.mode}\n${row.tradeName}${row.lastMessage ? '\n\nLast: ' + row.lastMessage : ''}`}
                   >
                     {formatLabel(row.status)}
                   </div>
                   {/* Hover tooltip - show for all tasks */}
-                  {(row.lastMessage || hasChat) && (
+                  {true && (
                     <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-slate-700 bg-slate-900 p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl">
-                      <div className="flex items-center justify-center gap-1 mb-3">
+                      <div className="flex items-center justify-center gap-1 mb-2">
                         <span className="text-sm font-bold text-emerald-400">
                           {new Date(row.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', year: '2-digit' })}
                         </span>
@@ -940,6 +940,12 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                         <span className="text-sm font-bold text-emerald-400">
                           {new Date(row.endDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', year: '2-digit' })}
                         </span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2 mb-2 text-xs">
+                        <span className={`px-2 py-0.5 rounded ${row.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : row.status === 'in_progress' ? 'bg-cyan-500/20 text-cyan-400' : row.status === 'blocked' ? 'bg-red-500/20 text-red-400' : 'bg-slate-700 text-slate-300'}`}>
+                          {row.status}
+                        </span>
+                        <span className="text-slate-500">{row.mode}</span>
                       </div>
                       {row.lastMessage ? (
                         <>
@@ -956,7 +962,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                           onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || []); }}
                           className="mt-3 w-full rounded-lg bg-cyan-500 py-2 text-sm font-medium text-slate-900 hover:bg-cyan-400"
                         >
-                          View Chat
+                          {row.status === 'completed' ? 'View Chat & Closeout' : 'View Chat'}
                         </button>
                       )}
                     </div>

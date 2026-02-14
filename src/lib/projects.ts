@@ -53,7 +53,7 @@ export interface Project {
 }
 
 export const STORAGE_KEY = "gc-tracker-projects";
-const STORAGE_VERSION = "v9";
+const STORAGE_VERSION = "v10";
 
 export const statusColors: Record<ProjectStatus, string> = {
   active: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
