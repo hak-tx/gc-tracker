@@ -932,10 +932,14 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                   {/* Hover tooltip - show for all tasks */}
                   {(row.lastMessage || hasChat) && (
                     <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-slate-700 bg-slate-900 p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-emerald-400">{row.startDate}</span>
-                        <span className="text-xs text-slate-500">→</span>
-                        <span className="text-xs font-bold text-emerald-400">{row.endDate}</span>
+                      <div className="flex items-center justify-center gap-1 mb-3">
+                        <span className="text-sm font-bold text-emerald-400">
+                          {new Date(row.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', year: '2-digit' })}
+                        </span>
+                        <span className="text-sm text-slate-500">→</span>
+                        <span className="text-sm font-bold text-emerald-400">
+                          {new Date(row.endDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', year: '2-digit' })}
+                        </span>
                       </div>
                       {row.lastMessage ? (
                         <>
