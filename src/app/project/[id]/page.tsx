@@ -307,7 +307,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             <h2 className="text-lg font-semibold">Task Gantt</h2>
             <span className="text-xs text-slate-500">Timeline by task start/end dates</span>
           </div>
-          <GanttChart project={project} />
+          <GanttChart project={project} onViewChat={(tradeName, taskTitle, messages) => setSelectedChatTask({ tradeName, taskTitle, messages })} />
         </section>
 
         <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
@@ -526,6 +526,14 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                                 </p>
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
+                                {task.chatMessages && task.chatMessages.length > 0 && (
+                                  <button
+                                    onClick={() => setSelectedChatTask({ tradeName: trade.name, taskTitle: task.title, messages: task.chatMessages || [] })}
+                                    className="rounded-full bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-200 hover:bg-slate-600"
+                                  >
+                                    💬 Chat
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => cycleTaskStatus(trade.id, task.id)}
                                   className={`rounded-full px-2.5 py-1 text-xs font-medium ${taskStatusColors[task.status]}`}
@@ -695,6 +703,37 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           )}
         </section>
       </main>
+
+      {/* Chat Modal */}
+      {selectedChatTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setSelectedChatTask(null)}>
+          <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
+              <div>
+                <h3 className="font-semibold text-white">Chat Thread</h3>
+                <p className="text-xs text-slate-400">{selectedChatTask.tradeName} - {selectedChatTask.taskTitle}</p>
+              </div>
+              <button onClick={() => setSelectedChatTask(null)} className="text-slate-400 hover:text-white text-xl">✕</button>
+            </div>
+            <div className="flex h-96 flex-col overflow-y-auto p-4 space-y-4">
+              {selectedChatTask.messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.from === "agent" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                    msg.from === "agent" 
+                      ? "bg-cyan-500 text-slate-900" 
+                      : "bg-slate-800 text-slate-100"
+                  }`}>
+                    <p className="text-sm">{msg.text}</p>
+                    <p className={`mt-1 text-[10px] ${msg.from === "agent" ? "text-slate-600" : "text-slate-500"}`}>
+                      {new Date(msg.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -745,7 +784,7 @@ function SelectField({
   );
 }
 
-function GanttChart({ project }: { project: Project }) {
+function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tradeName: string, taskTitle: string, messages: ChatMessage[]) => void }) {
   const rows = project.trades.flatMap((trade) =>
     trade.tasks.map((task) => ({
       id: task.id,
@@ -758,6 +797,7 @@ function GanttChart({ project }: { project: Project }) {
       lastMessage: task.lastMessage,
       lastMessageFrom: task.lastMessageFrom,
       lastMessageAt: task.lastMessageAt,
+      chatMessages: task.chatMessages || [],
     }))
   );
 
@@ -841,6 +881,14 @@ function GanttChart({ project }: { project: Project }) {
                       <p className="mt-2 text-xs text-cyan-300">{row.lastMessageFrom}</p>
                       <p className="text-xs text-slate-500">{row.lastMessageAt ? new Date(row.lastMessageAt).toLocaleString() : ''}</p>
                       <p className="mt-1 text-[10px] text-slate-600">Source: Telegram message</p>
+                      {row.chatMessages.length > 0 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onViewChat(row.tradeName, row.title, row.chatMessages); }}
+                          className="mt-3 w-full rounded-lg bg-cyan-500 py-2 text-sm font-medium text-slate-900 hover:bg-cyan-400"
+                        >
+                          View Chat
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
