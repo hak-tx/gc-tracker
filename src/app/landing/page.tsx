@@ -15,15 +15,14 @@ export default function Home() {
     <main className="section-grid">
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-6 pb-24 pt-16 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Introducing</p>
-        <h1 className="mt-4 font-[var(--font-sora)] text-5xl font-semibold text-white md:text-7xl">
-          FactorGC
-        </h1>
-        <p className="mx-auto mt-6 max-w-3xl text-xl text-slate-300 md:text-2xl">
-          Your automated project manager for construction.
-        </p>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-400">
-          Coordinates subs. Tracks schedule. Documents everything. 24/7.
+        {/* Logo */}
+        <img
+          src="/factorgc-wordmark.jpg"
+          alt="FactorGC"
+          className="mx-auto max-w-md"
+        />
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
+          Automated Construction Management System
         </p>
         <a
           href="https://gc-tracker-hakel.vercel.app"
