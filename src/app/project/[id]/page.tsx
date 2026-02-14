@@ -286,7 +286,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur">
+      <header className="border-b border-slate-800 bg-slate-900 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="text-sm text-slate-400 hover:text-white">
@@ -304,7 +304,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-1 md:gap-2">
           <SummaryCard label="Trades" value={project.trades.length.toString()} />
           <SummaryCard label="Tasks" value={totalTasks.toString()} valueClass="text-cyan-300" />
           <SummaryCard
@@ -351,7 +351,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   value={newTradeName}
                   onChange={(event) => setNewTradeName(event.target.value)}
                   placeholder="Electrical, Plumbing, HVAC..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
                 />
                 <div className="flex gap-2">
                   <button
@@ -380,8 +380,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           ) : (
             <div className="divide-y divide-slate-800">
               {project.trades.map((trade) => (
-                <article key={trade.id} className="bg-slate-800/40 px-4 py-5">
-                  <div className="mb-4 flex items-center justify-between rounded-lg bg-slate-800/60 px-4 py-3">
+                <article key={trade.id} className="bg-slate-800 px-4 py-5">
+                  <div className="mb-4 flex items-center justify-between rounded-lg bg-slate-800 px-4 py-3">
                     <div>
                       <h3 className="font-semibold text-white">{trade.name}</h3>
                       <p className="text-xs text-slate-400">{trade.tasks.length} task(s)</p>
@@ -397,7 +397,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           dependencyTaskIds: [],
                         });
                       }}
-                      className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-sm text-cyan-300 hover:bg-cyan-500/30"
+                      className="rounded-lg bg-cyan-500 px-3 py-1.5 text-sm text-slate-950 hover:bg-cyan-400"
                     >
                       + Add Task
                     </button>
@@ -417,7 +417,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           onChange={(event) =>
                             setNewTask((current) => ({ ...current, title: event.target.value }))
                           }
-                          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
                         />
                       </div>
 
@@ -432,7 +432,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                                 mode: event.target.value as TaskMode,
                               }))
                             }
-                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
                           >
                             <option value="sequential">Sequential</option>
                             <option value="parallel">Parallel</option>
@@ -447,7 +447,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                             onChange={(event) =>
                               setNewTask((current) => ({ ...current, startDate: event.target.value }))
                             }
-                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
                           />
                         </div>
                         <div>
@@ -459,7 +459,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                             onChange={(event) =>
                               setNewTask((current) => ({ ...current, endDate: event.target.value }))
                             }
-                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
                           />
                         </div>
                       </div>
@@ -535,7 +535,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           .filter((title): title is string => Boolean(title));
 
                         return (
-                          <div key={task.id} className="rounded-lg border border-slate-700/60 bg-slate-900/50 p-4">
+                          <div key={task.id} className="rounded-lg border border-slate-700 bg-slate-900 p-4">
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div>
                                 <h4 className="font-medium">{task.title}</h4>
@@ -604,7 +604,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                                     onChange={(event) =>
                                       setNewPunch((current) => ({ ...current, title: event.target.value }))
                                     }
-                                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
                                   />
                                 </div>
 
@@ -641,7 +641,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                                       onChange={(event) =>
                                         setNewPunch((current) => ({ ...current, dueDate: event.target.value }))
                                       }
-                                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
                                     />
                                   </div>
                                   <div>
@@ -652,7 +652,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                                       onChange={(event) =>
                                         setNewPunch((current) => ({ ...current, assignee: event.target.value }))
                                       }
-                                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+                                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
                                     />
                                   </div>
                                 </div>
@@ -681,7 +681,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                                 {task.punchItems.map((item) => (
                                   <div
                                     key={item.id}
-                                    className="rounded-md border border-slate-600/50 bg-slate-800/40 px-4 py-3"
+                                    className="rounded-md border border-slate-600 bg-slate-800 px-4 py-3"
                                   >
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                       <div>
@@ -732,7 +732,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
       {/* Chat Modal */}
       {selectedChatTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 md:p-4" onClick={() => setSelectedChatTask(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-2 md:p-4" onClick={() => setSelectedChatTask(null)}>
           <div className="h-full w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 md:h-auto md:max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
               <div>
@@ -774,9 +774,9 @@ function SummaryCard({
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 min-w-[120px]">
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className={`mt-2 text-3xl font-semibold ${valueClass ?? "text-slate-100"}`}>{value}</p>
+    <div className="rounded-lg border border-slate-800 bg-slate-900 px-2 py-2 md:rounded-xl md:px-4 md:py-4">
+      <p className="text-[10px] leading-tight text-slate-400 md:text-sm">{label}</p>
+      <p className={`mt-1 text-lg font-semibold leading-none md:mt-2 md:text-3xl ${valueClass ?? "text-slate-100"}`}>{value}</p>
     </div>
   );
 }
@@ -798,7 +798,7 @@ function SelectField({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400/80 transition focus:ring-2"
+        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none ring-cyan-400 transition focus:ring-2"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -838,6 +838,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
   const maxDate = new Date(Math.max(...allEnds.map((date) => date.getTime())));
 
   const msPerDay = 24 * 60 * 60 * 1000;
+  const rowHeight = 40;
   const totalDays = Math.max(1, Math.ceil((maxDate.getTime() - minDate.getTime()) / msPerDay) + 1);
   const dayWidth = 20;
   const timelineWidth = Math.max(540, totalDays * dayWidth);
@@ -871,7 +872,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="divide-y divide-slate-800 bg-slate-950">
           {rows.map((row) => {
             const hasChat = row.chatMessages && row.chatMessages.length > 0;
             const startOffset = Math.floor((toDate(row.startDate).getTime() - minDate.getTime()) / msPerDay);
@@ -882,11 +883,11 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
             return (
               <div
                 key={`${row.tradeName}-${row.id}`}
-                className={`flex items-center bg-slate-950 border-b border-slate-800 ${hasChat ? "cursor-pointer hover:bg-slate-900" : ""}`}
+                className={`flex h-10 bg-slate-950 ${hasChat ? "cursor-pointer hover:bg-slate-900" : ""}`}
                 onClick={() => hasChat && onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || [])}
               >
-                <div className="shrink-0 sticky left-0 z-20 bg-slate-950 border-r border-slate-800 pr-2 md:pr-3 w-32 md:w-[200px] h-full">
-                  <div className="flex items-center justify-between gap-1">
+                <div className="shrink-0 sticky left-0 z-20 flex h-10 w-32 items-center border-r border-slate-800 bg-slate-950 pr-2 md:w-[200px] md:pr-3">
+                  <div className="flex w-full items-center justify-between gap-1">
                     <p className={`min-w-0 truncate text-xs md:text-sm text-slate-200 ${hasChat ? "text-cyan-300" : ""}`}>{row.title}</p>
                     {row.chatMessages && row.chatMessages.length > 0 && (
                       <button
@@ -903,11 +904,8 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                       </button>
                     )}
                   </div>
-                  <p className="text-[10px] md:text-xs text-slate-500 hidden md:block">
-                    {row.tradeName}
-                  </p>
                 </div>
-                <div className="relative h-8 bg-slate-950" style={{ width: `${timelineWidth}px` }}>
+                <div className="relative bg-slate-950" style={{ width: `${timelineWidth}px`, height: `${rowHeight}px` }}>
                   {/* Vertical grid lines */}
                   {dayLabels.map((label) => (
                     <div
@@ -917,15 +915,16 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                     />
                   ))}
                   <div
-                    className="absolute top-1 h-6 rounded-md px-2 text-[11px] leading-6 text-slate-950 font-medium cursor-pointer transition hover:scale-105 hover:shadow-lg"
+                    className="absolute top-1 h-8 rounded-md px-2 text-[11px] font-medium leading-8 text-slate-950 transition hover:scale-105 hover:shadow-lg"
                     style={{
                       left: `${startOffset * dayWidth}px`,
                       width: `${duration}px`,
                       background:
-                        row.mode === "sequential"
-                          ? "linear-gradient(90deg,#38bdf8,#06b6d4)"
-                          : "linear-gradient(90deg,#f59e0b,#f97316)",
-                      opacity: row.status === "completed" ? 0.6 : 1,
+                        row.status === "completed"
+                          ? "linear-gradient(90deg,#34d399,#10b981)"
+                          : row.mode === "sequential"
+                            ? "linear-gradient(90deg,#38bdf8,#06b6d4)"
+                            : "linear-gradient(90deg,#f59e0b,#f97316)",
                     }}
                     title={`${row.title}\n${row.startDate} → ${row.endDate}\n${row.status}\n${row.mode}\n${row.tradeName}${row.lastMessage ? '\n\nLast: ' + row.lastMessage : ''}`}
                   >
@@ -944,7 +943,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                         </span>
                       </div>
                       <div className="flex items-center justify-center gap-2 mb-2 text-xs">
-                        <span className={`px-2 py-0.5 rounded ${row.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : row.status === 'in_progress' ? 'bg-cyan-500/20 text-cyan-400' : row.status === 'blocked' ? 'bg-red-500/20 text-red-400' : 'bg-slate-700 text-slate-300'}`}>
+                        <span className={`px-2 py-0.5 rounded ${row.status === 'completed' ? 'bg-emerald-600 text-emerald-100' : row.status === 'in_progress' ? 'bg-cyan-600 text-cyan-100' : row.status === 'blocked' ? 'bg-red-600 text-red-100' : 'bg-slate-700 text-slate-300'}`}>
                           {row.status}
                         </span>
                         <span className="text-slate-500">{row.mode}</span>

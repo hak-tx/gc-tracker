@@ -56,28 +56,28 @@ export const STORAGE_KEY = "gc-tracker-projects";
 const STORAGE_VERSION = "v11";
 
 export const statusColors: Record<ProjectStatus, string> = {
-  active: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
-  completed: "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40",
-  on_hold: "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40",
+  active: "bg-emerald-700 text-emerald-100 ring-1 ring-emerald-500",
+  completed: "bg-cyan-700 text-cyan-100 ring-1 ring-cyan-500",
+  on_hold: "bg-amber-700 text-amber-100 ring-1 ring-amber-500",
 };
 
 export const taskStatusColors: Record<TaskStatus, string> = {
-  not_started: "bg-slate-500/20 text-slate-300 ring-1 ring-slate-500/40",
-  in_progress: "bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/40",
-  completed: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40",
-  blocked: "bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40",
+  not_started: "bg-slate-700 text-slate-200 ring-1 ring-slate-500",
+  in_progress: "bg-blue-700 text-blue-100 ring-1 ring-blue-500",
+  completed: "bg-emerald-700 text-emerald-100 ring-1 ring-emerald-500",
+  blocked: "bg-rose-700 text-rose-100 ring-1 ring-rose-500",
 };
 
 export const punchStatusColors: Record<PunchStatus, string> = {
-  open: "bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40",
-  in_progress: "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40",
-  resolved: "bg-slate-500/20 text-slate-300 ring-1 ring-slate-500/40",
+  open: "bg-rose-700 text-rose-100 ring-1 ring-rose-500",
+  in_progress: "bg-amber-700 text-amber-100 ring-1 ring-amber-500",
+  resolved: "bg-slate-700 text-slate-200 ring-1 ring-slate-500",
 };
 
 export const priorityColors: Record<PunchPriority, string> = {
-  low: "bg-emerald-600/20 text-emerald-200 ring-1 ring-emerald-500/30",
-  medium: "bg-amber-600/20 text-amber-200 ring-1 ring-amber-500/30",
-  high: "bg-rose-600/20 text-rose-200 ring-1 ring-rose-500/30",
+  low: "bg-emerald-800 text-emerald-100 ring-1 ring-emerald-500",
+  medium: "bg-amber-800 text-amber-100 ring-1 ring-amber-500",
+  high: "bg-rose-800 text-rose-100 ring-1 ring-rose-500",
 };
 
 export const defaultProjects: Project[] = [
