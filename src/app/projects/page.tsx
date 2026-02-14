@@ -6,10 +6,20 @@ import { loadProjects, formatDate, statusColors, Project } from "@/lib/projects"
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setProjects(loadProjects());
+    const timeoutId = window.setTimeout(() => {
+      setProjects(loadProjects());
+      setMounted(true);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-slate-950" />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -56,7 +66,7 @@ export default function ProjectsPage() {
         </div>
 
         <div className="mt-12 rounded-xl border border-slate-800 bg-slate-900/30 p-6">
-          <h3 className="text-lg font-semibold text-white">What you're seeing:</h3>
+          <h3 className="text-lg font-semibold text-white">What you&apos;re seeing:</h3>
           <ul className="mt-3 space-y-2 text-sm text-slate-400">
             <li>• <strong className="text-white">Gantt Timeline</strong> - Visual schedule across all trades</li>
             <li>• <strong className="text-white">Task Status</strong> - Not started, in progress, completed, blocked</li>

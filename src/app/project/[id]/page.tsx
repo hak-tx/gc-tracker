@@ -49,12 +49,15 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const router = useRouter();
 
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Load from localStorage only on client to avoid hydration mismatch
   useEffect(() => {
-    setProjects(loadProjects());
-    setLoaded(true);
+    const timeoutId = window.setTimeout(() => {
+      setProjects(loadProjects());
+      setMounted(true);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
   const [newTradeName, setNewTradeName] = useState("");
   const [isAddingTrade, setIsAddingTrade] = useState(false);
@@ -79,8 +82,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   });
 
   useEffect(() => {
+    if (!mounted) {
+      return;
+    }
     saveProjects(projects);
-  }, [projects]);
+  }, [mounted, projects]);
 
   const project = useMemo(
     () => projects.find((entry) => entry.id === resolvedParams.id),
@@ -257,6 +263,10 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       ),
     }));
   };
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-slate-950" />;
+  }
 
   if (!project) {
     return (
@@ -911,7 +921,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                   {/* Hover tooltip */}
                   {row.lastMessage && (
                     <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-slate-700 bg-slate-900 p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl">
-                      <p className="text-sm text-white italic">"{row.lastMessage}"</p>
+                      <p className="text-sm text-white italic">&quot;{row.lastMessage}&quot;</p>
                       <p className="mt-2 text-xs text-cyan-300">{row.lastMessageFrom}</p>
                       <p className="text-xs text-slate-500">{row.lastMessageAt ? new Date(row.lastMessageAt).toLocaleString() : ''}</p>
                       <p className="mt-1 text-[10px] text-slate-600">Source: Telegram message</p>
