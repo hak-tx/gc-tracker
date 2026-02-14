@@ -855,7 +855,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
     <div className="overflow-x-auto [-webkit-overflow-scrolling:touch] scroll-smooth">
       <div className="min-w-full" style={{ width: `${timelineWidth + 128}px` }}>
         <div className="mb-2 flex border-b border-slate-700 pb-2">
-          <div className="shrink-0 sticky left-0 z-10 bg-slate-950 pr-2 md:pr-3 border-r border-slate-700 backdrop-blur-sm w-32 md:w-[200px]">
+          <div className="shrink-0 sticky left-0 z-20 bg-slate-950 pr-2 md:pr-3 border-r border-slate-700 w-32 md:w-[200px]">
             <span className="text-xs uppercase tracking-wide text-slate-400">Task</span>
           </div>
           <div className="relative" style={{ width: `${timelineWidth}px` }}>
@@ -885,7 +885,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                 className={`flex items-center group ${hasChat ? "cursor-pointer hover:bg-slate-800/50 rounded" : ""}`}
                 onClick={() => hasChat && onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || [])}
               >
-                <div className="shrink-0 sticky left-0 z-10 bg-slate-950 border-r border-slate-800 pr-2 md:pr-3 backdrop-blur-sm w-32 md:w-[200px]">
+                <div className="shrink-0 sticky left-0 z-20 bg-slate-950 border-r border-slate-800 pr-2 md:pr-3 w-32 md:w-[200px]">
                   <div className="flex items-center justify-between gap-1">
                     <p className={`min-w-0 truncate text-xs md:text-sm text-slate-200 ${hasChat ? "text-cyan-300" : ""}`}>{row.title}</p>
                     {row.chatMessages && row.chatMessages.length > 0 && (
