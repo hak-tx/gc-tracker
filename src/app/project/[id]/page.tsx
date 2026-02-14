@@ -304,7 +304,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        <div className="grid grid-cols-4 gap-2">
           <SummaryCard label="Trades" value={project.trades.length.toString()} />
           <SummaryCard label="Tasks" value={totalTasks.toString()} valueClass="text-cyan-300" />
           <SummaryCard
@@ -319,7 +319,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           />
         </div>
 
-        <section className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+        <section className="rounded-xl border border-slate-800 bg-slate-900 p-4 overflow-hidden">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Task Gantt</h2>
             <p className="text-xs text-slate-500 md:hidden">← Swipe to see timeline →</p>
@@ -406,7 +406,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   {addingTaskTradeId === trade.id && (
                     <form
                       onSubmit={(event) => handleAddTask(event, trade.id)}
-                      className="mb-4 space-y-3 rounded-lg border border-slate-800 bg-slate-950/80 p-3"
+                      className="mb-4 space-y-3 rounded-lg border border-slate-800 bg-slate-950 p-3"
                     >
                       <div>
                         <label className="mb-1 block text-xs text-slate-400">Task title</label>
@@ -853,8 +853,8 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
 
   return (
     <div className="overflow-x-auto [-webkit-overflow-scrolling:touch] scroll-smooth">
-      <div className="min-w-full" style={{ width: `${timelineWidth + 128}px` }}>
-        <div className="mb-2 flex border-b border-slate-700 pb-2">
+      <div className="min-w-full bg-slate-900" style={{ width: `${timelineWidth + 128}px` }}>
+        <div className="mb-2 flex border-b border-slate-700 pb-2 bg-slate-900">
           <div className="shrink-0 sticky left-0 z-20 bg-slate-950 pr-2 md:pr-3 border-r border-slate-700 w-32 md:w-[200px]">
             <span className="text-xs uppercase tracking-wide text-slate-400">Task</span>
           </div>
@@ -885,7 +885,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                 className={`flex items-center bg-slate-950 border-b border-slate-800 ${hasChat ? "cursor-pointer hover:bg-slate-900" : ""}`}
                 onClick={() => hasChat && onViewChat(row.tradeName, row.lastMessageFrom || "Sub", row.title, row.chatMessages || [])}
               >
-                <div className="shrink-0 sticky left-0 z-20 bg-slate-950 border-r border-slate-800 pr-2 md:pr-3 w-32 md:w-[200px]">
+                <div className="shrink-0 sticky left-0 z-20 bg-slate-950 border-r border-slate-800 pr-2 md:pr-3 w-32 md:w-[200px] h-full">
                   <div className="flex items-center justify-between gap-1">
                     <p className={`min-w-0 truncate text-xs md:text-sm text-slate-200 ${hasChat ? "text-cyan-300" : ""}`}>{row.title}</p>
                     {row.chatMessages && row.chatMessages.length > 0 && (
@@ -907,7 +907,7 @@ function GanttChart({ project, onViewChat }: { project: Project; onViewChat: (tr
                     {row.tradeName}
                   </p>
                 </div>
-                <div className="relative h-8" style={{ width: `${timelineWidth}px` }}>
+                <div className="relative h-8 bg-slate-950" style={{ width: `${timelineWidth}px` }}>
                   {/* Vertical grid lines */}
                   {dayLabels.map((label) => (
                     <div
