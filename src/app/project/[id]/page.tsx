@@ -323,7 +323,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Task Gantt</h2>
             <p className="text-xs text-slate-500 md:hidden">← Swipe to see timeline →</p>
-            <span className="text-xs text-slate-500">Timeline by task start/end dates</span>
+            <span className="text-xs text-slate-500 hidden md:inline">Timeline by task start/end dates</span>
           </div>
           <GanttChart project={project} onViewChat={(tradeName, subName, taskTitle, messages) => setSelectedChatTask({ tradeName, subName, taskTitle, messages })} />
         </section>
