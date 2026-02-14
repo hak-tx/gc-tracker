@@ -3,6 +3,7 @@ import { loadProjects, formatDate, statusColors } from "@/lib/projects";
 
 export default function ProjectsPage() {
   const projects = loadProjects();
+  return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur">
         <div className="mx-auto max-w-6xl px-6 py-4">
