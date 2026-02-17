@@ -7,8 +7,8 @@ import {
   pollTelegramMessages,
   addChatMessageToTask,
   updateTaskStatus,
-  getTelegramState,
 } from "@/lib/telegram";
+import { logMessage } from "@/lib/pmInbox";
 
 interface TelegramDemoProps {
   projectId?: string;
@@ -36,12 +36,27 @@ export default function TelegramDemo({ projectId = "1" }: TelegramDemoProps) {
     try {
       const result = await sendToTelegram(message);
       setResponse(result.message || "Message sent!");
-      
+
+      // Log outbound message for PM review trail
+      logMessage({
+        direction: "outbound",
+        channel: "telegram",
+        text: message,
+        sender: "GC Agent",
+      });
+
       // Also try to process locally for demo
-      const state = getTelegramState();
       const messages = await pollTelegramMessages();
       
       for (const msg of messages) {
+        logMessage({
+          direction: "inbound",
+          channel: "telegram",
+          chatId: msg.chatId,
+          sender: "Subcontractor",
+          text: msg.text,
+        });
+
         // Simple demo: if message contains "done", mark task complete
         if (msg.text.toLowerCase().includes("done") || 
             msg.text.toLowerCase().includes("finished")) {

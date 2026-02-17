@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { appendCommsEvent } from "@/lib/server/commsIngest";
 
 // Types matching the project's data model
 interface TelegramUpdate {
@@ -154,6 +155,16 @@ export async function POST(request: NextRequest) {
       message: text,
       timestamp: new Date().toISOString(),
       parsed,
+    });
+
+    // Bridge inbound Telegram message into backend comms ingest queue
+    appendCommsEvent({
+      source: "telegram_webhook",
+      chatId,
+      sender: "sub",
+      text,
+      projectHint: parsed.projectId,
+      taskHint: parsed.taskId,
     });
     
     // Generate and return response
