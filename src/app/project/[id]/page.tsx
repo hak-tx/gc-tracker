@@ -197,7 +197,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const [ingestEvents, setIngestEvents] = useState<IngestEvent[]>([]);
   const [ingestLoading, setIngestLoading] = useState(false);
   const [showManualControls, setShowManualControls] = useState(false);
-  const [autoApplyIngest, setAutoApplyIngest] = useState(false);
+  const [autoApplyIngest, setAutoApplyIngest] = useState(true);
   const processedIngestIdsRef = useRef<Set<string>>(new Set());
   const ingestStartedAtRef = useRef<string>(new Date().toISOString());
   const hasBackfilledFromChatRef = useRef(false);
