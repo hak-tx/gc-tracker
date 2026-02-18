@@ -63,7 +63,7 @@ interface IngestEvent {
   receivedAt: string;
 }
 
-const APP_BUILD_TAG = "comms-fix-2026-02-18-2";
+const APP_BUILD_TAG = "comms-fix-2026-02-18-3";
 
 const makeId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -138,37 +138,50 @@ const parseDateReferenceFromText = (text: string, now = new Date()): string | nu
   return null;
 };
 
+const extractStartClause = (text: string): string => {
+  const normalized = text.toLowerCase();
+  const startMatch = normalized.match(
+    /\b(?:start(?:ed|ing)?|restart(?:ed|ing)?|resume(?:d|ing)?|begin|began|kickoff)\b[^.\n]*/
+  );
+  if (!startMatch) return "";
+
+  return startMatch[0].split(/\b(?:with\s+completion|completion|finish(?:ed|ing)?|complete(?:d|ing)?|by|until)\b/i)[0].trim();
+};
+
+const extractEndClause = (text: string): string => {
+  const normalized = text.toLowerCase();
+  const endMatch = normalized.match(
+    /\b(?:by|before|until|complete(?:d|ing)?|finish(?:ed|ing)?|completion(?:\s+expected)?)\b[^.\n]*/
+  );
+  return endMatch?.[0]?.trim() || normalized;
+};
+
 const parseTargetStartDateFromMessage = (text: string, now = new Date()): string | null => {
   const normalized = text.toLowerCase();
   const hasStartCue = /\b(start|started|starting|restart|restarted|resume|resumed|begin|began|kickoff)\b/.test(normalized);
   if (!hasStartCue) return null;
 
-  // Prioritize explicit start-time cues first.
-  if (/\b(today|this\s+morning|this\s+afternoon|now)\b/.test(normalized)) {
+  const startClause = extractStartClause(text);
+
+  if (/\b(today|this\s+morning|this\s+afternoon|now)\b/.test(startClause || normalized)) {
     return toIsoDate(now);
   }
 
-  if (/\b(start(?:ed|ing)?|restart(?:ed|ing)?|resume(?:d|ing)?|begin|began)\b[^.\n]{0,20}\btomorrow\b/.test(normalized)) {
+  if (/\btomorrow\b/.test(startClause)) {
     const target = new Date(now);
     target.setDate(now.getDate() + 1);
     return toIsoDate(target);
   }
 
-  // Only parse weekday/date near a start cue (avoid using completion-by dates for start).
-  const startPhraseMatch = normalized.match(
-    /\b(?:start(?:ed|ing)?|restart(?:ed|ing)?|resume(?:d|ing)?|begin|began|kickoff)\b[^.\n]{0,40}/
-  );
-  if (startPhraseMatch?.[0]) {
-    const explicitFromStartPhrase = parseDateReferenceFromText(startPhraseMatch[0], now);
-    if (explicitFromStartPhrase) return explicitFromStartPhrase;
-  }
+  const explicitFromStartClause = parseDateReferenceFromText(startClause, now);
+  if (explicitFromStartClause) return explicitFromStartClause;
 
-  // If start is mentioned without date, default to message date.
   return toIsoDate(now);
 };
 
 const parseTargetEndDateFromMessage = (text: string, now = new Date()): string | null => {
-  return parseDateReferenceFromText(text, now);
+  const endClause = extractEndClause(text);
+  return parseDateReferenceFromText(endClause, now);
 };
 
 const titleCase = (value: string) =>
