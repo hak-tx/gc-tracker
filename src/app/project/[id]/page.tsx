@@ -939,23 +939,29 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     hasBackfilledFromChatRef.current = true;
   }, [project]);
 
-  const generateAgentReply = (subText: string) => {
+  const generateAgentReply = (
+    subText: string,
+    options?: { extractedStatus?: TaskStatus; extractedScope?: string; extractedEndDate?: string }
+  ) => {
     const normalized = subText.toLowerCase();
-    const status = inferTaskStatusFromMessage(subText);
-    const inferredEnd = parseTargetEndDateFromMessage(subText);
-    const inferredScope = inferAutoTaskTitle(subText);
+    const inferredLocalStatus = inferTaskStatusFromMessage(subText);
+    const inferredEnd = options?.extractedEndDate || parseTargetEndDateFromMessage(subText);
+    const inferredScope = options?.extractedScope || inferAutoTaskTitle(subText);
 
     const hasDependencyLanguage =
       /\b(once|after|when)\b/.test(normalized) && /\b(complete|completed|finish|finished|done)\b/.test(normalized);
+
+    // Critical: "once X is complete" is dependency language, not a completion update.
+    const status: TaskStatus | null = hasDependencyLanguage ? "not_started" : options?.extractedStatus || inferredLocalStatus;
+
+    if (hasDependencyLanguage) {
+      return `Got it — I’ll queue ${inferredScope.toLowerCase()} as the next step after rough-in. What date should I target for starting it?`;
+    }
 
     if (status === "completed") return "Great work. Marking this complete and moving to the next dependency.";
 
     if (status === "blocked") {
       return "Got it. What's blocking you specifically so I can clear it today?";
-    }
-
-    if (hasDependencyLanguage && !inferredEnd) {
-      return `Got it. What date should I put for finishing ${inferredScope.toLowerCase()} so I can line up the next step?`;
     }
 
     if (status === "in_progress") {
@@ -1192,7 +1198,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                                       {
                                         id: agentMessageId,
                                         from: "agent" as const,
-                                        text: generateAgentReply(evt.text),
+                                        text: generateAgentReply(evt.text, {
+                                          extractedStatus: extractedStatus ?? undefined,
+                                          extractedScope: extractedTitle ?? undefined,
+                                          extractedEndDate: extractedEndDate ?? undefined,
+                                        }),
                                         timestamp: new Date().toISOString(),
                                       },
                                     ],
@@ -1254,7 +1264,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       maybeApplyStatusFromText(tradeId, taskId, event.text);
     }
 
-    const agentReply = generateAgentReply(event.text);
+    const agentReply = generateAgentReply(event.text, {
+      extractedStatus: event.extraction?.status,
+      extractedScope: event.extraction?.taskTitle,
+      extractedEndDate: event.extraction?.endDate,
+    });
     appendTaskMessage(tradeId, taskId, "agent", agentReply, "GC Agent");
     setCommsResult("Ingested event applied to task + GC Agent response logged.");
   };
