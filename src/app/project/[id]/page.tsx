@@ -940,10 +940,35 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   }, [project]);
 
   const generateAgentReply = (subText: string) => {
+    const normalized = subText.toLowerCase();
     const status = inferTaskStatusFromMessage(subText);
+    const inferredEnd = parseTargetEndDateFromMessage(subText);
+    const inferredScope = inferAutoTaskTitle(subText);
+
+    const hasDependencyLanguage =
+      /\b(once|after|when)\b/.test(normalized) && /\b(complete|completed|finish|finished|done)\b/.test(normalized);
+
     if (status === "completed") return "Great work. Marking this complete and moving to the next dependency.";
-    if (status === "in_progress") return "Perfect. Keep me posted if anything threatens the finish date.";
-    if (status === "blocked") return "Got it. What's blocking you specifically so I can clear it today?";
+
+    if (status === "blocked") {
+      return "Got it. What's blocking you specifically so I can clear it today?";
+    }
+
+    if (hasDependencyLanguage && !inferredEnd) {
+      return `Got it. What date should I put for finishing ${inferredScope.toLowerCase()} so I can line up the next step?`;
+    }
+
+    if (status === "in_progress") {
+      if (!inferredEnd) {
+        return `Good update. What target finish date should I set for ${inferredScope.toLowerCase()}?`;
+      }
+      return "Perfect. Keep me posted if anything threatens the finish date.";
+    }
+
+    if (!inferredEnd) {
+      return "Received. What finish date should I log for this scope?";
+    }
+
     return "Received. Thanks for the update — I logged it in the project record.";
   };
 
