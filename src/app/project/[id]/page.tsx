@@ -134,11 +134,50 @@ const parseTargetEndDateFromMessage = (text: string, now = new Date()): string |
   return null;
 };
 
+const titleCase = (value: string) =>
+  value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
 const inferAutoTaskTitle = (text: string): string => {
   const normalized = text.toLowerCase();
+
+  const explicitScope = normalized.match(
+    /\b(?:started|starting|restarted|resume(?:d)?|continu(?:e|ing|ed)|working on|install(?:ing|ed)?|mount(?:ing|ed)?|rough[-\s]?in(?:g)?|finish(?:ing|ed)?|complete(?:d|ing)?|update(?:d)?)\s+([a-z0-9][a-z0-9\s\-/&]{2,40})/
+  );
+  if (explicitScope?.[1]) {
+    const scope = explicitScope[1]
+      .replace(/\b(today|tomorrow|now|this\s+morning|this\s+afternoon|by\s+next\s+\w+|by\s+\w+)\b/g, "")
+      .replace(/[^a-z0-9\s\-/&]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (scope.length >= 3) {
+      return titleCase(scope);
+    }
+  }
+
+  const keywordScopes: Array<{ re: RegExp; title: string }> = [
+    { re: /\brough[-\s]?in\b/, title: "Rough-In" },
+    { re: /\bpanel(?:s)?\b.*\bmount|\bmount(?:ing)?\s+panel/, title: "Panel Mounting" },
+    { re: /\binspection\b/, title: "Inspection" },
+    { re: /\bpermit\b/, title: "Permitting" },
+    { re: /\bfixture(?:s)?\b/, title: "Fixture Installation" },
+    { re: /\bwiring\b|\bwire\b/, title: "Wiring" },
+    { re: /\bdrywall\b/, title: "Drywall" },
+    { re: /\bpaint(?:ing)?\b/, title: "Painting" },
+    { re: /\bfloor(?:ing)?\b/, title: "Flooring" },
+  ];
+
+  const matchedScope = keywordScopes.find((entry) => entry.re.test(normalized));
+  if (matchedScope) return matchedScope.title;
+
   if (/\b(schedule|eta|finish|done|complete|started|start|tomorrow|friday|monday|tuesday|wednesday|thursday)\b/.test(normalized)) {
     return "Schedule Update";
   }
+
   return "Subcontractor Update";
 };
 
@@ -775,7 +814,12 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
           const inferredStatus = inferTaskStatusFromMessage(latestSub.text);
           const inferredEndDate = parseTargetEndDateFromMessage(latestSub.text);
-          const inferredTitle = task.title === "Inbound Coordination" ? inferAutoTaskTitle(latestSub.text) : task.title;
+          const inferredTitle =
+            task.title === "Inbound Coordination" ||
+            task.title === "Schedule Update" ||
+            task.title === "Subcontractor Update"
+              ? inferAutoTaskTitle(latestSub.text)
+              : task.title;
 
           const shouldFlipMode =
             task.mode === "sequential" &&
@@ -969,8 +1013,16 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                         const existingMessages = task.chatMessages || [];
                         const alreadyHasSub = existingMessages.some((msg) => msg.id === subMessageId);
 
+                        const inferredTitle =
+                          task.title === "Inbound Coordination" ||
+                          task.title === "Schedule Update" ||
+                          task.title === "Subcontractor Update"
+                            ? inferAutoTaskTitle(evt.text)
+                            : task.title;
+
                         return {
                           ...task,
+                          title: inferredTitle,
                           lastMessage: evt.text,
                           lastMessageFrom: company || "Subcontractor",
                           lastMessageAt: new Date().toISOString(),
