@@ -63,14 +63,14 @@ interface IngestEvent {
   receivedAt: string;
 }
 
-const APP_BUILD_TAG = "comms-fix-2026-02-17-3";
+const APP_BUILD_TAG = "comms-fix-2026-02-18-1";
 
 const makeId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
 const toIsoDate = (date: Date) => date.toISOString().slice(0, 10);
 
-const parseTargetEndDateFromMessage = (text: string, now = new Date()): string | null => {
+const parseDateReferenceFromText = (text: string, now = new Date()): string | null => {
   const normalized = text.toLowerCase();
 
   const numericDate = normalized.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
@@ -131,7 +131,30 @@ const parseTargetEndDateFromMessage = (text: string, now = new Date()): string |
     return toIsoDate(target);
   }
 
+  if (/\btoday\b/.test(normalized)) {
+    return toIsoDate(now);
+  }
+
   return null;
+};
+
+const parseTargetStartDateFromMessage = (text: string, now = new Date()): string | null => {
+  const normalized = text.toLowerCase();
+  const hasStartCue = /\b(start|started|starting|restart|restarted|resume|resumed|begin|began|kickoff)\b/.test(normalized);
+  if (!hasStartCue) return null;
+
+  const explicit = parseDateReferenceFromText(text, now);
+  if (explicit) return explicit;
+
+  if (/\b(today|this\s+morning|this\s+afternoon|now)\b/.test(normalized)) {
+    return toIsoDate(now);
+  }
+
+  return toIsoDate(now);
+};
+
+const parseTargetEndDateFromMessage = (text: string, now = new Date()): string | null => {
+  return parseDateReferenceFromText(text, now);
 };
 
 const titleCase = (value: string) =>
@@ -776,8 +799,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   const maybeApplyStatusFromText = (tradeId: string, taskId: string, text: string) => {
     const inferred = inferTaskStatusFromMessage(text);
+    const inferredStartDate = parseTargetStartDateFromMessage(text);
     const inferredEndDate = parseTargetEndDateFromMessage(text);
-    if (!inferred && !inferredEndDate) return;
+    if (!inferred && !inferredStartDate && !inferredEndDate) return;
 
     updateProject((entry) => ({
       ...entry,
@@ -790,6 +814,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   ? {
                       ...task,
                       status: inferred ?? task.status,
+                      startDate: inferredStartDate ?? task.startDate,
                       endDate: inferredEndDate ?? task.endDate,
                     }
                   : task
@@ -813,7 +838,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           if (!latestSub) return task;
 
           const inferredStatus = inferTaskStatusFromMessage(latestSub.text);
-          const inferredEndDate = parseTargetEndDateFromMessage(latestSub.text);
+          const messageNow = new Date(latestSub.timestamp);
+          const inferredStartDate = parseTargetStartDateFromMessage(latestSub.text, messageNow);
+          const inferredEndDate = parseTargetEndDateFromMessage(latestSub.text, messageNow);
           const inferredTitle =
             task.title === "Inbound Coordination" ||
             task.title === "Schedule Update" ||
@@ -830,6 +857,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             ...task,
             title: inferredTitle,
             status: inferredStatus ?? task.status,
+            startDate: inferredStartDate ?? task.startDate,
             endDate: inferredEndDate ?? task.endDate,
             mode: shouldFlipMode ? ("parallel" as TaskMode) : task.mode,
           };
@@ -837,6 +865,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           if (
             nextTask.title !== task.title ||
             nextTask.status !== task.status ||
+            nextTask.startDate !== task.startDate ||
             nextTask.endDate !== task.endDate ||
             nextTask.mode !== task.mode
           ) {
@@ -949,7 +978,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               const taskId = makeId("t");
               const tradeName = company || "GC Agent Sub";
               const taskTitle = inferAutoTaskTitle(evt.text);
-              const inferredEndDate = parseTargetEndDateFromMessage(evt.text);
+              const eventNow = new Date(evt.receivedAt);
+              const inferredStartDate = parseTargetStartDateFromMessage(evt.text, eventNow);
+              const inferredEndDate = parseTargetEndDateFromMessage(evt.text, eventNow);
               const newTrade = {
                 id: tradeId,
                 name: tradeName,
@@ -959,8 +990,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                     title: taskTitle,
                     mode: "parallel" as TaskMode,
                     status: "in_progress" as TaskStatus,
-                    startDate: entry.startDate,
-                    endDate: inferredEndDate ?? entry.endDate ?? entry.startDate,
+                    startDate: inferredStartDate ?? toIsoDate(eventNow),
+                    endDate: inferredEndDate ?? entry.endDate ?? inferredStartDate ?? toIsoDate(eventNow),
                     dependencyTaskIds: [],
                     punchItems: [],
                     chatMessages: [],
@@ -974,14 +1005,16 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             let targetTask = targetTrade.tasks[0];
             if (!targetTask) {
               const taskId = makeId("t");
-              const inferredEndDate = parseTargetEndDateFromMessage(evt.text);
+              const eventNow = new Date(evt.receivedAt);
+              const inferredStartDate = parseTargetStartDateFromMessage(evt.text, eventNow);
+              const inferredEndDate = parseTargetEndDateFromMessage(evt.text, eventNow);
               const injectedTask = {
                 id: taskId,
                 title: inferAutoTaskTitle(evt.text),
                 mode: "parallel" as TaskMode,
                 status: "in_progress" as TaskStatus,
-                startDate: nextEntry.startDate,
-                endDate: inferredEndDate ?? nextEntry.endDate ?? nextEntry.startDate,
+                startDate: inferredStartDate ?? toIsoDate(eventNow),
+                endDate: inferredEndDate ?? nextEntry.endDate ?? inferredStartDate ?? toIsoDate(eventNow),
                 dependencyTaskIds: [],
                 punchItems: [],
                 chatMessages: [],
@@ -1045,7 +1078,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             };
 
             if (evt.relevance === "schedule_update" && evt.confidence >= 0.8 && evt.inferredStatus) {
-              const inferredEndDate = parseTargetEndDateFromMessage(evt.text);
+              const eventNow = new Date(evt.receivedAt);
+              const inferredStartDate = parseTargetStartDateFromMessage(evt.text, eventNow);
+              const inferredEndDate = parseTargetEndDateFromMessage(evt.text, eventNow);
               return {
                 ...withSubMessage,
                 trades: withSubMessage.trades.map((trade) =>
@@ -1057,6 +1092,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                             ? {
                                 ...task,
                                 status: evt.inferredStatus!,
+                                startDate: inferredStartDate ?? task.startDate,
                                 endDate: inferredEndDate ?? task.endDate,
                                 chatMessages: (task.chatMessages || []).some((msg) => msg.id === agentMessageId)
                                   ? task.chatMessages || []
