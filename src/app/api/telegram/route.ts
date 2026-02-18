@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Bridge inbound Telegram message into backend comms ingest queue
-    appendCommsEvent({
+    await appendCommsEvent({
       source: "telegram_webhook",
       chatId,
       sender: "sub",

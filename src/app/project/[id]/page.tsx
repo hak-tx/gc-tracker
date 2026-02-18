@@ -60,6 +60,16 @@ interface IngestEvent {
   relevance: "schedule_update" | "coordination" | "noise" | "needs_review";
   confidence: number;
   inferredStatus?: TaskStatus;
+  extraction?: {
+    companyName?: string;
+    taskTitle?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: TaskStatus;
+    relevance?: "schedule_update" | "coordination" | "noise" | "needs_review";
+    confidence?: number;
+    summary?: string;
+  };
   receivedAt: string;
 }
 
@@ -1012,7 +1022,13 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           let resolvedKey = "";
 
           updateProject((entry) => {
-            const company = extractCompanyName(evt.text);
+            const eventNow = new Date(evt.receivedAt);
+            const extracted = evt.extraction;
+            const company = extracted?.companyName || extractCompanyName(evt.text);
+            const extractedTitle = extracted?.taskTitle?.trim();
+            const extractedStartDate = extracted?.startDate;
+            const extractedEndDate = extracted?.endDate;
+            const extractedStatus = extracted?.status || evt.inferredStatus;
 
             let targetTrade =
               (company && entry.trades.find((t) => t.name.toLowerCase() === company.toLowerCase())) ||
@@ -1030,10 +1046,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               const tradeId = makeId("tr");
               const taskId = makeId("t");
               const tradeName = company || "GC Agent Sub";
-              const taskTitle = inferAutoTaskTitle(evt.text);
-              const eventNow = new Date(evt.receivedAt);
-              const inferredStartDate = parseTargetStartDateFromMessage(evt.text, eventNow);
-              const inferredEndDate = parseTargetEndDateFromMessage(evt.text, eventNow);
+              const taskTitle = extractedTitle || inferAutoTaskTitle(evt.text);
+              const inferredStartDate = extractedStartDate || parseTargetStartDateFromMessage(evt.text, eventNow);
+              const inferredEndDate = extractedEndDate || parseTargetEndDateFromMessage(evt.text, eventNow);
               const newTrade = {
                 id: tradeId,
                 name: tradeName,
@@ -1058,12 +1073,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             let targetTask = targetTrade.tasks[0];
             if (!targetTask) {
               const taskId = makeId("t");
-              const eventNow = new Date(evt.receivedAt);
-              const inferredStartDate = parseTargetStartDateFromMessage(evt.text, eventNow);
-              const inferredEndDate = parseTargetEndDateFromMessage(evt.text, eventNow);
+              const inferredStartDate = extractedStartDate || parseTargetStartDateFromMessage(evt.text, eventNow);
+              const inferredEndDate = extractedEndDate || parseTargetEndDateFromMessage(evt.text, eventNow);
               const injectedTask = {
                 id: taskId,
-                title: inferAutoTaskTitle(evt.text),
+                title: extractedTitle || inferAutoTaskTitle(evt.text),
                 mode: "parallel" as TaskMode,
                 status: "in_progress" as TaskStatus,
                 startDate: inferredStartDate ?? toIsoDate(eventNow),
@@ -1103,7 +1117,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           task.title === "Inbound Coordination" ||
                           task.title === "Schedule Update" ||
                           task.title === "Subcontractor Update"
-                            ? inferAutoTaskTitle(evt.text)
+                            ? extractedTitle || inferAutoTaskTitle(evt.text)
                             : task.title;
 
                         return {
@@ -1130,10 +1144,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               ),
             };
 
-            if (evt.relevance === "schedule_update" && evt.confidence >= 0.8 && evt.inferredStatus) {
-              const eventNow = new Date(evt.receivedAt);
-              const inferredStartDate = parseTargetStartDateFromMessage(evt.text, eventNow);
-              const inferredEndDate = parseTargetEndDateFromMessage(evt.text, eventNow);
+            if ((evt.relevance === "schedule_update" || extractedStatus) && evt.confidence >= 0.65 && extractedStatus) {
+              const inferredStartDate = extractedStartDate || parseTargetStartDateFromMessage(evt.text, eventNow);
+              const inferredEndDate = extractedEndDate || parseTargetEndDateFromMessage(evt.text, eventNow);
               return {
                 ...withSubMessage,
                 trades: withSubMessage.trades.map((trade) =>
@@ -1144,7 +1157,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           task.id === targetTask!.id
                             ? {
                                 ...task,
-                                status: evt.inferredStatus!,
+                                status: extractedStatus,
                                 startDate: inferredStartDate ?? task.startDate,
                                 endDate: inferredEndDate ?? task.endDate,
                                 chatMessages: (task.chatMessages || []).some((msg) => msg.id === agentMessageId)
