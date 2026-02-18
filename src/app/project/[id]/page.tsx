@@ -63,7 +63,7 @@ interface IngestEvent {
   receivedAt: string;
 }
 
-const APP_BUILD_TAG = "comms-fix-2026-02-18-1";
+const APP_BUILD_TAG = "comms-fix-2026-02-18-2";
 
 const makeId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -143,13 +143,27 @@ const parseTargetStartDateFromMessage = (text: string, now = new Date()): string
   const hasStartCue = /\b(start|started|starting|restart|restarted|resume|resumed|begin|began|kickoff)\b/.test(normalized);
   if (!hasStartCue) return null;
 
-  const explicit = parseDateReferenceFromText(text, now);
-  if (explicit) return explicit;
-
+  // Prioritize explicit start-time cues first.
   if (/\b(today|this\s+morning|this\s+afternoon|now)\b/.test(normalized)) {
     return toIsoDate(now);
   }
 
+  if (/\b(start(?:ed|ing)?|restart(?:ed|ing)?|resume(?:d|ing)?|begin|began)\b[^.\n]{0,20}\btomorrow\b/.test(normalized)) {
+    const target = new Date(now);
+    target.setDate(now.getDate() + 1);
+    return toIsoDate(target);
+  }
+
+  // Only parse weekday/date near a start cue (avoid using completion-by dates for start).
+  const startPhraseMatch = normalized.match(
+    /\b(?:start(?:ed|ing)?|restart(?:ed|ing)?|resume(?:d|ing)?|begin|began|kickoff)\b[^.\n]{0,40}/
+  );
+  if (startPhraseMatch?.[0]) {
+    const explicitFromStartPhrase = parseDateReferenceFromText(startPhraseMatch[0], now);
+    if (explicitFromStartPhrase) return explicitFromStartPhrase;
+  }
+
+  // If start is mentioned without date, default to message date.
   return toIsoDate(now);
 };
 
