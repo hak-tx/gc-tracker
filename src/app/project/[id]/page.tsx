@@ -63,7 +63,7 @@ interface IngestEvent {
   receivedAt: string;
 }
 
-const APP_BUILD_TAG = "comms-fix-2026-02-18-3";
+const APP_BUILD_TAG = "comms-fix-2026-02-18-4";
 
 const makeId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -87,16 +87,27 @@ const parseDateReferenceFromText = (text: string, now = new Date()): string | nu
   }
 
   const weekdayMap: Record<string, number> = {
+    sun: 0,
     sunday: 0,
+    mon: 1,
     monday: 1,
+    tue: 2,
+    tues: 2,
     tuesday: 2,
+    wed: 3,
+    weds: 3,
     wednesday: 3,
+    thu: 4,
+    thur: 4,
+    thurs: 4,
     thursday: 4,
+    fri: 5,
     friday: 5,
+    sat: 6,
     saturday: 6,
   };
 
-  const weekdayMatch = normalized.match(/\b(?:(this|next)\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/);
+  const weekdayMatch = normalized.match(/\b(?:(this|next)\s+)?(mon(?:day)?|tue(?:s|sday)?|wed(?:s|nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b/);
   if (weekdayMatch) {
     const qualifier = weekdayMatch[1];
     const weekday = weekdayMap[weekdayMatch[2]];
@@ -163,11 +174,18 @@ const parseTargetStartDateFromMessage = (text: string, now = new Date()): string
 
   const startClause = extractStartClause(text);
 
+  // Handle patterns like "on site tomorrow to start ..."
+  if (/\btomorrow\b[^.\n]{0,40}\b(start|starting|restart|restarted|begin|began|kickoff)\b/.test(normalized)) {
+    const target = new Date(now);
+    target.setDate(now.getDate() + 1);
+    return toIsoDate(target);
+  }
+
   if (/\b(today|this\s+morning|this\s+afternoon|now)\b/.test(startClause || normalized)) {
     return toIsoDate(now);
   }
 
-  if (/\btomorrow\b/.test(startClause)) {
+  if (/\btomorrow\b/.test(startClause) || /\b(start|starting|restart|restarted|begin|began|kickoff)\b[^.\n]{0,25}\btomorrow\b/.test(normalized)) {
     const target = new Date(now);
     target.setDate(now.getDate() + 1);
     return toIsoDate(target);
@@ -211,6 +229,8 @@ const inferAutoTaskTitle = (text: string): string => {
 
   const keywordScopes: Array<{ re: RegExp; title: string }> = [
     { re: /\brough[-\s]?in\b/, title: "Rough-In" },
+    { re: /\btrench(?:ing)?\b|\btrenching\b/, title: "Trenching" },
+    { re: /\bexcavat(?:e|ion|ing)\b/, title: "Excavation" },
     { re: /\bpanel(?:s)?\b.*\bmount|\bmount(?:ing)?\s+panel/, title: "Panel Mounting" },
     { re: /\binspection\b/, title: "Inspection" },
     { re: /\bpermit\b/, title: "Permitting" },
@@ -921,11 +941,17 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     const cleaned = text.replace(/^\s+|\s+$/g, "");
     if (!cleaned) return null;
 
-    const explicit = cleaned.match(/^([A-Za-z0-9 '&.-]{3,50}?)(?:\s+(?:here|co\.?|company)\b|[:.-])/i);
-    if (explicit?.[1]) return explicit[1].trim();
+    // Prefer explicit signer at end: "- Juan Plumbing"
+    const signer = cleaned.match(/[-–—]\s*([A-Za-z][A-Za-z0-9 '&.-]{2,50})\s*$/);
+    if (signer?.[1]) return signer[1].trim();
 
-    const tradeWord = cleaned.match(/\b([A-Z][A-Za-z0-9&'.-]*\s+(?:Electrical|Plumbing|HVAC|Drywall|Flooring|Painting|Paint))\b/);
+    // Common company-name patterns in-body.
+    const tradeWord = cleaned.match(/\b([A-Z][A-Za-z0-9&'.-]*(?:\s+[A-Z][A-Za-z0-9&'.-]*)?\s+(?:Electrical|Plumbing|HVAC|Drywall|Flooring|Painting|Paint))\b/);
     if (tradeWord?.[1]) return tradeWord[1].trim();
+
+    // Prefix form: "ABC Electrical: ..." but avoid full-sentence capture.
+    const explicitPrefix = cleaned.match(/^([A-Za-z][A-Za-z0-9 '&.-]{2,40}?)(?::\s|\s+here\b)/i);
+    if (explicitPrefix?.[1]) return explicitPrefix[1].trim();
 
     return null;
   };
@@ -1018,7 +1044,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                     mode: "parallel" as TaskMode,
                     status: "in_progress" as TaskStatus,
                     startDate: inferredStartDate ?? toIsoDate(eventNow),
-                    endDate: inferredEndDate ?? entry.endDate ?? inferredStartDate ?? toIsoDate(eventNow),
+                    endDate: inferredEndDate ?? inferredStartDate ?? toIsoDate(eventNow),
                     dependencyTaskIds: [],
                     punchItems: [],
                     chatMessages: [],
@@ -1041,7 +1067,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                 mode: "parallel" as TaskMode,
                 status: "in_progress" as TaskStatus,
                 startDate: inferredStartDate ?? toIsoDate(eventNow),
-                endDate: inferredEndDate ?? nextEntry.endDate ?? inferredStartDate ?? toIsoDate(eventNow),
+                endDate: inferredEndDate ?? inferredStartDate ?? toIsoDate(eventNow),
                 dependencyTaskIds: [],
                 punchItems: [],
                 chatMessages: [],
